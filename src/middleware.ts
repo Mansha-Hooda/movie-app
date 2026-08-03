@@ -8,8 +8,9 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except static assets and Next.js internals.
+     * Match all request paths except static assets, PWA files, and Next.js internals.
+     * manifest.json / sw.js must not hit auth redirects (browser expects JSON/JS, not HTML).
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|json)$).*)',
   ],
 }

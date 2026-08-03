@@ -32,7 +32,11 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isLoginPage = pathname === '/login'
   const isAuthCallback = pathname.startsWith('/auth/callback')
-  const isPublicRoute = isLoginPage || isAuthCallback
+  const isPwaAsset =
+    pathname === '/manifest.json' ||
+    pathname === '/sw.js' ||
+    pathname.startsWith('/pwa-')
+  const isPublicRoute = isLoginPage || isAuthCallback || isPwaAsset
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
