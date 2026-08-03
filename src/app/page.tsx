@@ -36,6 +36,9 @@ export default async function HomePage() {
           <p className="text-sm text-gray-600">{user.email}</p>
         </div>
         <div className="flex items-center gap-4">
+          <Link href="/share-handler" className="text-sm text-gray-700 underline">
+            Screenshot
+          </Link>
           <Link href="/backlog" className="text-sm text-gray-700 underline">
             Full backlog
           </Link>

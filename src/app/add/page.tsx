@@ -2,8 +2,23 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { TitleForm } from '@/components/TitleForm'
 import { createClient } from '@/lib/supabase/server'
+import type { MediaType } from '@/types/database'
 
-export default async function AddPage() {
+type AddPageProps = {
+  searchParams: Promise<{
+    name?: string
+    media_type?: string
+  }>
+}
+
+function parseMediaType(value: string | undefined): MediaType | undefined {
+  if (value === 'movie' || value === 'show' || value === 'book') {
+    return value
+  }
+  return undefined
+}
+
+export default async function AddPage({ searchParams }: AddPageProps) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -13,6 +28,10 @@ export default async function AddPage() {
     redirect('/login')
   }
 
+  const params = await searchParams
+  const initialName = params.name?.trim() || undefined
+  const initialMediaType = parseMediaType(params.media_type)
+
   return (
     <main className="mx-auto max-w-md px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
@@ -21,7 +40,12 @@ export default async function AddPage() {
           Back
         </Link>
       </div>
-      <TitleForm userId={user.id} />
+      <TitleForm
+        userId={user.id}
+        initialName={initialName}
+        initialMediaType={initialMediaType}
+        autoEnrich={Boolean(initialName)}
+      />
     </main>
   )
 }

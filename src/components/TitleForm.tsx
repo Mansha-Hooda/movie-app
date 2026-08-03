@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createTitle } from '@/lib/titles/api'
@@ -16,6 +16,10 @@ import type { MediaType, TimeCommitment } from '@/types/database'
 
 type TitleFormProps = {
   userId: string
+  initialName?: string
+  initialMediaType?: MediaType
+  /** When true with initialName, auto-pick the best search hit and enrich. */
+  autoEnrich?: boolean
 }
 
 type EnrichmentFields = {
@@ -32,10 +36,21 @@ const EMPTY_ENRICHMENT: EnrichmentFields = {
   synopsis: null,
 }
 
-export function TitleForm({ userId }: TitleFormProps) {
+function pickBestResult(results: SearchResult[], query: string): SearchResult {
+  const normalized = query.trim().toLowerCase()
+  const exact = results.find((r) => r.name.toLowerCase() === normalized)
+  return exact ?? results[0]
+}
+
+export function TitleForm({
+  userId,
+  initialName = '',
+  initialMediaType = 'movie',
+  autoEnrich = false,
+}: TitleFormProps) {
   const router = useRouter()
-  const [name, setName] = useState('')
-  const [mediaType, setMediaType] = useState<MediaType>('movie')
+  const [name, setName] = useState(initialName)
+  const [mediaType, setMediaType] = useState<MediaType>(initialMediaType)
   const [suggestedBy, setSuggestedBy] = useState('')
   const [moodTags, setMoodTags] = useState<MoodTag[]>([])
   const [timeCommitment, setTimeCommitment] = useState<TimeCommitment>('medium')
@@ -49,6 +64,8 @@ export function TitleForm({ userId }: TitleFormProps) {
 
   const searchSeq = useRef(0)
   const blurTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const autoEnrichPending = useRef(autoEnrich && initialName.trim().length >= 2)
+  const skipNextMediaTypeClear = useRef(true)
 
   useEffect(() => {
     const trimmed = name.trim()
@@ -71,32 +88,49 @@ export function TitleForm({ userId }: TitleFormProps) {
         if (!response.ok) {
           if (seq === searchSeq.current) {
             setResults([])
+            autoEnrichPending.current = false
           }
           return
         }
         const data = (await response.json()) as { results?: SearchResult[] }
-        if (seq === searchSeq.current) {
-          setResults(data.results ?? [])
+        if (seq !== searchSeq.current) return
+
+        const nextResults = data.results ?? []
+        setResults(nextResults)
+
+        if (autoEnrichPending.current && nextResults.length > 0) {
+          autoEnrichPending.current = false
+          setDropdownOpen(false)
+          await applyEnrichment(pickBestResult(nextResults, trimmed), mediaType)
+        } else if (!autoEnrichPending.current) {
           setDropdownOpen(true)
+        } else {
+          autoEnrichPending.current = false
+          setDropdownOpen(false)
         }
       } catch {
         if (seq === searchSeq.current) {
           setResults([])
+          autoEnrichPending.current = false
         }
       } finally {
         if (seq === searchSeq.current) {
           setSearching(false)
         }
       }
-    }, 400)
+    }, autoEnrichPending.current ? 0 : 400)
 
     return () => clearTimeout(timer)
   }, [name, mediaType])
 
-  // Clear enrichment + results when media type changes
   useEffect(() => {
+    if (skipNextMediaTypeClear.current) {
+      skipNextMediaTypeClear.current = false
+      return
+    }
     setEnrichment(EMPTY_ENRICHMENT)
     setResults([])
+    setMoodTags([])
   }, [mediaType])
 
   function toggleMoodTag(tag: MoodTag) {
@@ -108,9 +142,10 @@ export function TitleForm({ userId }: TitleFormProps) {
   function clearEnrichmentOnManualEdit(nextName: string) {
     setName(nextName)
     setEnrichment(EMPTY_ENRICHMENT)
+    autoEnrichPending.current = false
   }
 
-  async function handleSelectResult(result: SearchResult) {
+  async function applyEnrichment(result: SearchResult, type: MediaType) {
     setSelecting(true)
     setDropdownOpen(false)
     setResults([])
@@ -119,18 +154,16 @@ export function TitleForm({ userId }: TitleFormProps) {
     try {
       const params = new URLSearchParams({
         id: result.id,
-        media_type: mediaType,
+        media_type: type,
       })
       const response = await fetch(`/api/search-title?${params}`)
       if (!response.ok) {
-        // Still use the search hit's title/poster if enrich fails
         setEnrichment({
           poster_url: result.poster_url,
           genre: null,
           runtime_or_pages: null,
           synopsis: null,
         })
-        // No genre → don't invent mood defaults
         setMoodTags([])
         return
       }
@@ -144,7 +177,6 @@ export function TitleForm({ userId }: TitleFormProps) {
           runtime_or_pages: data.enrichment.runtime_or_pages,
           synopsis: data.enrichment.synopsis,
         })
-        // Starting suggestion only — chips stay fully editable
         setMoodTags(moodsFromGenre(data.enrichment.genre))
       }
     } catch {
@@ -158,6 +190,10 @@ export function TitleForm({ userId }: TitleFormProps) {
     } finally {
       setSelecting(false)
     }
+  }
+
+  async function handleSelectResult(result: SearchResult) {
+    await applyEnrichment(result, mediaType)
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -319,7 +355,9 @@ export function TitleForm({ userId }: TitleFormProps) {
           id="suggested_by"
           type="text"
           value={suggestedBy}
-          onChange={(event) => setSuggestedBy(event.target.value)}
+          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+            setSuggestedBy(event.target.value)
+          }
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900"
         />
       </div>
