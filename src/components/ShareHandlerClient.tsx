@@ -80,7 +80,7 @@ export function ShareHandlerClient() {
         let uploadFile: File
         try {
           uploadFile = await compressImageForUpload(file, {
-            maxDimension: 1600,
+            maxDimension: 1200,
             quality: 0.8,
           })
         } catch {
