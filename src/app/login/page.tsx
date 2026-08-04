@@ -1,7 +1,24 @@
 import { LoginForm } from '@/components/LoginForm'
 
+function debugEnvVar(name: string, value: string | undefined) {
+  const hasNewlineOrTab = value ? /[\n\r\t]/.test(value) : false
+  const hasLeadingTrailingSpace = value ? value !== value.trim() : false
+  const hasAnyWhitespace = value ? /\s/.test(value) : false
+
+  return `${name}
+typeof: ${typeof value}
+length: ${value?.length ?? 'n/a'}
+first 20: ${value ? JSON.stringify(value.slice(0, 20)) : 'n/a'}
+last 20: ${value ? JSON.stringify(value.slice(-20)) : 'n/a'}
+has [\\n\\r\\t]: ${String(hasNewlineOrTab)}
+has leading/trailing space: ${String(hasLeadingTrailingSpace)}
+has any whitespace (\\s): ${String(hasAnyWhitespace)}
+JSON: ${JSON.stringify(value)}`
+}
+
 export default function LoginPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center px-6">
@@ -19,7 +36,11 @@ typeof: ${typeof supabaseUrl}
 value: ${supabaseUrl ?? '(undefined)'}
 JSON: ${JSON.stringify(supabaseUrl)}
 length: ${supabaseUrl?.length ?? 'n/a'}
-startsWith https://: ${String(supabaseUrl?.startsWith('https://') ?? false)}`}
+startsWith https://: ${String(supabaseUrl?.startsWith('https://') ?? false)}
+
+---
+
+${debugEnvVar('DEBUG NEXT_PUBLIC_SUPABASE_ANON_KEY', supabaseAnonKey)}`}
         </pre>
       </div>
     </main>

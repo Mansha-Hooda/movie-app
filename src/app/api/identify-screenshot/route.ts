@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { identifyScreenshot } from '@/lib/gemini/identify'
 
-const MAX_BYTES = 8 * 1024 * 1024 // 8 MB
+/** Keep under Vercel's ~4.5MB request body limit (leave headroom for multipart overhead). */
+const MAX_BYTES = 4 * 1024 * 1024
 const ALLOWED_TYPES = new Set([
   'image/jpeg',
   'image/jpg',
@@ -23,7 +24,19 @@ export async function POST(request: Request) {
     let imageBase64 = ''
 
     if (contentType.includes('multipart/form-data')) {
-      const formData = await request.formData()
+      let formData: FormData
+      try {
+        formData = await request.formData()
+      } catch {
+        return NextResponse.json(
+          {
+            error: 'Image too large, please try again',
+            code: 'IMAGE_TOO_LARGE',
+          },
+          { status: 413 },
+        )
+      }
+
       const file = formData.get('image')
 
       if (!(file instanceof Blob) || file.size === 0) {
@@ -31,7 +44,13 @@ export async function POST(request: Request) {
       }
 
       if (file.size > MAX_BYTES) {
-        return NextResponse.json({ error: 'Image too large (max 8MB)' }, { status: 400 })
+        return NextResponse.json(
+          {
+            error: 'Image too large, please try again',
+            code: 'IMAGE_TOO_LARGE',
+          },
+          { status: 413 },
+        )
       }
 
       mimeType = file.type || 'image/jpeg'
@@ -45,9 +64,20 @@ export async function POST(request: Request) {
       const buffer = Buffer.from(await file.arrayBuffer())
       imageBase64 = buffer.toString('base64')
     } else {
-      const body = (await request.json()) as {
-        imageBase64?: string
-        mimeType?: string
+      let body: { imageBase64?: string; mimeType?: string }
+      try {
+        body = (await request.json()) as {
+          imageBase64?: string
+          mimeType?: string
+        }
+      } catch {
+        return NextResponse.json(
+          {
+            error: 'Image too large, please try again',
+            code: 'IMAGE_TOO_LARGE',
+          },
+          { status: 413 },
+        )
       }
 
       if (!body.imageBase64) {
@@ -59,7 +89,13 @@ export async function POST(request: Request) {
 
       const approxBytes = (imageBase64.length * 3) / 4
       if (approxBytes > MAX_BYTES) {
-        return NextResponse.json({ error: 'Image too large (max 8MB)' }, { status: 400 })
+        return NextResponse.json(
+          {
+            error: 'Image too large, please try again',
+            code: 'IMAGE_TOO_LARGE',
+          },
+          { status: 413 },
+        )
       }
     }
 
@@ -68,6 +104,17 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Identification failed'
     console.error('[identify-screenshot]', message)
+
+    if (/too large|payload|entity too large|body.*limit/i.test(message)) {
+      return NextResponse.json(
+        {
+          error: 'Image too large, please try again',
+          code: 'IMAGE_TOO_LARGE',
+        },
+        { status: 413 },
+      )
+    }
+
     return NextResponse.json({ error: message }, { status: 502 })
   }
 }

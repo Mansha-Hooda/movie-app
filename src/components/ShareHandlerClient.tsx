@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'reac
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { IdentifyResult } from '@/lib/gemini/types'
+import { compressImageForUpload } from '@/lib/images/compress'
 import type { MediaType } from '@/types/database'
 
 const SHARE_CACHE = 'share-target-v1'
@@ -37,6 +38,12 @@ async function readSharedImageFromCache(): Promise<File | null> {
   }
 }
 
+function isTooLargeError(status: number, message: string | undefined): boolean {
+  if (status === 413) return true
+  if (!message) return false
+  return /too large|payload|entity too large|body.*limit|413/i.test(message)
+}
+
 export function ShareHandlerClient() {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -44,6 +51,9 @@ export function ShareHandlerClient() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [guess, setGuess] = useState<IdentifyResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [errorKind, setErrorKind] = useState<'size' | 'identify' | 'generic' | null>(
+    null,
+  )
 
   const revokePreview = useCallback(() => {
     setPreviewUrl((current) => {
@@ -62,26 +72,57 @@ export function ShareHandlerClient() {
     async (file: File) => {
       revokePreview()
       setError(null)
+      setErrorKind(null)
       setGuess(null)
-      setPreviewUrl(URL.createObjectURL(file))
       setPhase('loading')
 
       try {
+        let uploadFile: File
+        try {
+          uploadFile = await compressImageForUpload(file, {
+            maxDimension: 1600,
+            quality: 0.8,
+          })
+        } catch {
+          // If compression fails (e.g. exotic HEIC), fall back to original
+          uploadFile = file
+        }
+
+        setPreviewUrl(URL.createObjectURL(uploadFile))
+
         const formData = new FormData()
-        formData.append('image', file)
+        formData.append('image', uploadFile)
 
         const response = await fetch('/api/identify-screenshot', {
           method: 'POST',
           body: formData,
         })
 
-        const data = (await response.json()) as {
-          result?: IdentifyResult
-          error?: string
+        let data: { result?: IdentifyResult; error?: string; code?: string } = {}
+        try {
+          data = (await response.json()) as typeof data
+        } catch {
+          if (response.status === 413 || response.status === 400) {
+            setError('Image too large, please try again')
+            setErrorKind('size')
+            setPhase('fallback')
+            return
+          }
+          setError('Something went wrong identifying the screenshot')
+          setErrorKind('generic')
+          setPhase('fallback')
+          return
         }
 
         if (!response.ok) {
-          setError(data.error || 'Could not identify this image')
+          const message = data.error || 'Could not identify this image'
+          if (data.code === 'IMAGE_TOO_LARGE' || isTooLargeError(response.status, message)) {
+            setError('Image too large, please try again')
+            setErrorKind('size')
+          } else {
+            setError(message)
+            setErrorKind('generic')
+          }
           setPhase('fallback')
           return
         }
@@ -93,14 +134,22 @@ export function ShareHandlerClient() {
           result.confidence < MIN_CONFIDENCE
         ) {
           setGuess(result ?? null)
+          setErrorKind('identify')
           setPhase('fallback')
           return
         }
 
         setGuess(result)
         setPhase('confirm')
-      } catch {
-        setError('Something went wrong identifying the screenshot')
+      } catch (err) {
+        const message = err instanceof Error ? err.message : ''
+        if (isTooLargeError(0, message)) {
+          setError('Image too large, please try again')
+          setErrorKind('size')
+        } else {
+          setError('Something went wrong identifying the screenshot')
+          setErrorKind('generic')
+        }
         setPhase('fallback')
       }
     },
@@ -147,6 +196,19 @@ export function ShareHandlerClient() {
     return 'Unknown'
   }
 
+  const fallbackTitle =
+    errorKind === 'size'
+      ? 'Image too large'
+      : errorKind === 'generic'
+        ? 'Something went wrong'
+        : "Couldn't confidently identify a title"
+
+  const fallbackBody =
+    error ||
+    (errorKind === 'size'
+      ? 'Image too large, please try again'
+      : 'Try uploading a clearer screenshot, or search/type the title manually.')
+
   return (
     <div className="space-y-6">
       <input
@@ -183,7 +245,9 @@ export function ShareHandlerClient() {
       )}
 
       {phase === 'loading' && (
-        <p className="text-center text-sm text-gray-600">Identifying title…</p>
+        <p className="text-center text-sm text-gray-600">
+          Preparing image and identifying title…
+        </p>
       )}
 
       {phase === 'confirm' && guess && (
@@ -218,13 +282,8 @@ export function ShareHandlerClient() {
 
       {phase === 'fallback' && (
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <p className="mb-2 font-medium text-gray-900">
-            Couldn&apos;t confidently identify a title
-          </p>
-          <p className="mb-4 text-sm text-gray-600">
-            {error ||
-              'Try uploading a clearer screenshot, or search/type the title manually.'}
-          </p>
+          <p className="mb-2 font-medium text-gray-900">{fallbackTitle}</p>
+          <p className="mb-4 text-sm text-gray-600">{fallbackBody}</p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
@@ -250,6 +309,7 @@ export function ShareHandlerClient() {
             revokePreview()
             setGuess(null)
             setError(null)
+            setErrorKind(null)
             setPhase('idle')
           }}
           className="text-sm text-gray-600 underline"
