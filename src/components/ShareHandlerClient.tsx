@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import type { IdentifyResult } from '@/lib/gemini/types'
+import type { IdentifyResult } from '@/lib/identify/types'
 import { compressImageForUpload } from '@/lib/images/compress'
 import type { MediaType } from '@/types/database'
 

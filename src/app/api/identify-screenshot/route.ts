@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { identifyScreenshot } from '@/lib/gemini/identify'
+import { identifyScreenshot } from '@/lib/identify'
 
 /** Keep under Vercel's ~4.5MB request body limit (leave headroom for multipart overhead). */
 const MAX_BYTES = 4 * 1024 * 1024

@@ -1,7 +1,2 @@
-export type MediaTypeGuess = 'movie' | 'show' | 'book'
-
-export type IdentifyResult = {
-  name: string | null
-  media_type: MediaTypeGuess | null
-  confidence: number
-}
+/** @deprecated Import from `@/lib/identify/types` instead. */
+export type { IdentifyResult, MediaTypeGuess } from '@/lib/identify/types'
