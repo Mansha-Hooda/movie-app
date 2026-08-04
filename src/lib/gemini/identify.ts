@@ -32,7 +32,7 @@ type GeminiResponse = {
 }
 
 function getApiKey(): string {
-  const key = process.env.GEMINI_API_KEY
+  const key = process.env.GEMINI_API_KEY?.trim()
   if (!key) {
     throw new Error('GEMINI_API_KEY is not configured')
   }
@@ -78,9 +78,13 @@ export async function identifyScreenshot(
 ): Promise<IdentifyResult> {
   const key = getApiKey()
 
-  const response = await fetch(`${GEMINI_URL}?key=${encodeURIComponent(key)}`, {
+  // Prefer header auth (query ?key= also works; both sent for compatibility)
+  const response = await fetch(GEMINI_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': key,
+    },
     body: JSON.stringify({
       contents: [
         {
