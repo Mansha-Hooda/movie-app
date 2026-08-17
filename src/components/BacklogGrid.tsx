@@ -3,6 +3,9 @@
 import { useMemo, useState } from 'react'
 import { MediaTypeTabs, type MediaTypeTab } from '@/components/MediaTypeTabs'
 import { TitleGrid } from '@/components/TitleGrid'
+import { UndoWatchedToast } from '@/components/UndoWatchedToast'
+import { WatchedProgress } from '@/components/WatchedProgress'
+import { useBacklogTitles } from '@/hooks/useBacklogTitles'
 import { filterTitles } from '@/lib/titles/filter'
 import type { Title } from '@/types/database'
 
@@ -12,17 +15,21 @@ type BacklogGridProps = {
 
 /** Full backlog list with media-type tabs (client-side filter only). */
 export function BacklogGrid({ titles: initialTitles }: BacklogGridProps) {
-  const [titles, setTitles] = useState(initialTitles)
+  const {
+    titles,
+    handleTitleUpdate,
+    undo,
+    undoWatched,
+    dismissUndo,
+    watchedCount,
+    totalCount,
+  } = useBacklogTitles(initialTitles)
   const [mediaType, setMediaType] = useState<MediaTypeTab>('all')
 
   const filtered = useMemo(
     () => filterTitles(titles, { moods: [], time: null, mediaType }),
     [titles, mediaType],
   )
-
-  function handleTitleUpdate(updated: Title) {
-    setTitles((current) => current.map((t) => (t.id === updated.id ? updated : t)))
-  }
 
   const emptyMessage =
     mediaType === 'all'
@@ -31,7 +38,9 @@ export function BacklogGrid({ titles: initialTitles }: BacklogGridProps) {
 
   return (
     <div>
-      <div className="mb-6">
+      <WatchedProgress watchedCount={watchedCount} totalCount={totalCount} />
+
+      <div className="mb-6 mt-4">
         <MediaTypeTabs value={mediaType} onChange={setMediaType} />
       </div>
 
@@ -45,6 +54,8 @@ export function BacklogGrid({ titles: initialTitles }: BacklogGridProps) {
         }
         onTitleUpdate={handleTitleUpdate}
       />
+
+      <UndoWatchedToast undo={undo} onUndo={undoWatched} onDismiss={dismissUndo} />
     </div>
   )
 }

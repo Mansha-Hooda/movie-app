@@ -26,5 +26,5 @@ export const TIME_COMMITMENTS: { value: TimeCommitment; label: string }[] = [
 export const TITLE_STATUSES: { value: TitleStatus; label: string }[] = [
   { value: 'backlog', label: 'Backlog' },
   { value: 'in_progress', label: 'In progress' },
-  { value: 'done', label: 'Done' },
+  { value: 'done', label: 'Watched' },
 ]

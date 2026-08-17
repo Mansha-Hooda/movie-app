@@ -21,12 +21,13 @@ export function hasActiveFilters(filters: TitleFilters): boolean {
 
 /**
  * Filters titles for list views.
- * - Mood/time inactive: keep all statuses.
+ * - Always hide status === 'done' (watched items are counted separately).
+ * - Mood/time inactive: show backlog and in_progress.
  * - Mood/time active: only status === 'backlog', plus mood overlap and/or time match.
  * - mediaType (when not 'all'): further restrict to that media_type.
  */
 export function filterTitles(titles: Title[], filters: TitleFilters): Title[] {
-  let results = titles
+  let results = titles.filter((title) => title.status !== 'done')
 
   if (hasMoodOrTimeFilters(filters)) {
     results = results.filter((title) => {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { updateTitleRating, updateTitleStatus } from '@/lib/titles/api'
+import { updateTitleStatus } from '@/lib/titles/api'
 import { TITLE_STATUSES } from '@/lib/titles/constants'
 import type { Title, TitleStatus } from '@/types/database'
 
@@ -22,8 +22,10 @@ export function TitleCard({ title: initialTitle, onUpdate }: TitleCardProps) {
   }
 
   async function handleStatusChange(status: TitleStatus) {
+    const previous = title
     setError(null)
     setUpdating(true)
+    commitUpdate({ ...title, status })
 
     const supabase = createClient()
     const { error: updateError } = await updateTitleStatus(supabase, title.id, status)
@@ -31,28 +33,9 @@ export function TitleCard({ title: initialTitle, onUpdate }: TitleCardProps) {
     setUpdating(false)
 
     if (updateError) {
+      commitUpdate(previous)
       setError(updateError.message)
-      return
     }
-
-    commitUpdate({ ...title, status })
-  }
-
-  async function handleRatingChange(rating: number) {
-    setError(null)
-    setUpdating(true)
-
-    const supabase = createClient()
-    const { error: updateError } = await updateTitleRating(supabase, title.id, rating)
-
-    setUpdating(false)
-
-    if (updateError) {
-      setError(updateError.message)
-      return
-    }
-
-    commitUpdate({ ...title, rating })
   }
 
   return (
@@ -120,28 +103,6 @@ export function TitleCard({ title: initialTitle, onUpdate }: TitleCardProps) {
           ))}
         </select>
       </div>
-
-      {title.status === 'done' && (
-        <div>
-          <span className="mb-1 block text-xs text-gray-500">Rating</span>
-          <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                type="button"
-                disabled={updating}
-                onClick={() => handleRatingChange(star)}
-                className={`text-lg disabled:opacity-60 ${
-                  title.rating && star <= title.rating ? 'text-gray-900' : 'text-gray-300'
-                }`}
-                aria-label={`Rate ${star} stars`}
-              >
-                ★
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {error && (
         <p className="mt-2 text-xs text-red-600" role="alert">

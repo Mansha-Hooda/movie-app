@@ -3,6 +3,9 @@
 import { useMemo, useState } from 'react'
 import { MediaTypeTabs, type MediaTypeTab } from '@/components/MediaTypeTabs'
 import { TitleGrid } from '@/components/TitleGrid'
+import { UndoWatchedToast } from '@/components/UndoWatchedToast'
+import { WatchedProgress } from '@/components/WatchedProgress'
+import { useBacklogTitles } from '@/hooks/useBacklogTitles'
 import { MOOD_TAGS, TIME_COMMITMENTS, type MoodTag } from '@/lib/titles/constants'
 import { filterTitles, hasActiveFilters } from '@/lib/titles/filter'
 import type { TimeCommitment, Title } from '@/types/database'
@@ -12,7 +15,15 @@ type WhatFitsNowProps = {
 }
 
 export function WhatFitsNow({ initialTitles }: WhatFitsNowProps) {
-  const [titles, setTitles] = useState(initialTitles)
+  const {
+    titles,
+    handleTitleUpdate,
+    undo,
+    undoWatched,
+    dismissUndo,
+    watchedCount,
+    totalCount,
+  } = useBacklogTitles(initialTitles)
   const [mediaType, setMediaType] = useState<MediaTypeTab>('all')
   const [moods, setMoods] = useState<MoodTag[]>([])
   const [time, setTime] = useState<TimeCommitment | null>(null)
@@ -34,17 +45,15 @@ export function WhatFitsNow({ initialTitles }: WhatFitsNowProps) {
     setTime((current) => (current === value ? null : value))
   }
 
-  function handleTitleUpdate(updated: Title) {
-    setTitles((current) => current.map((t) => (t.id === updated.id ? updated : t)))
-  }
-
   const emptyMessage = filtersActive
     ? 'Nothing matches right now — try different filters.'
     : 'Your backlog is empty — add something to watch or read.'
 
   return (
     <div>
-      <section className="mb-8 space-y-4">
+      <WatchedProgress watchedCount={watchedCount} totalCount={totalCount} />
+
+      <section className="mb-8 mt-4 space-y-4">
         <div>
           <h2 className="mb-2 text-sm font-medium text-gray-700">Type</h2>
           <MediaTypeTabs value={mediaType} onChange={setMediaType} />
@@ -107,6 +116,8 @@ export function WhatFitsNow({ initialTitles }: WhatFitsNowProps) {
         }
         onTitleUpdate={handleTitleUpdate}
       />
+
+      <UndoWatchedToast undo={undo} onUndo={undoWatched} onDismiss={dismissUndo} />
     </div>
   )
 }
