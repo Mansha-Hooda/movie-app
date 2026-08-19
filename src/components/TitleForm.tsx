@@ -424,7 +424,6 @@ export function TitleForm({
               handleAddCustomMood()
             }
           }}
-          placeholder="Add your own mood"
           className="field"
         />
         <div className="mt-2 flex flex-wrap gap-2">
