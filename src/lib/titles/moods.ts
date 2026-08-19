@@ -1,4 +1,5 @@
 import {
+  ALL_MOOD,
   MOOD_DISPLAY_LABELS,
   MOOD_TAGS,
   type MoodTag,
@@ -14,6 +15,7 @@ export function isBuiltInMood(value: string): value is MoodTag {
 }
 
 export function moodLabel(value: string): string {
+  if (value === ALL_MOOD) return 'all'
   if (isBuiltInMood(value)) {
     return MOOD_DISPLAY_LABELS[value]
   }

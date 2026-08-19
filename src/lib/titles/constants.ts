@@ -8,6 +8,9 @@ export const MEDIA_TYPES: { value: MediaType; label: string }[] = [
 
 export const MOOD_TAGS = ['cozy', 'sad', 'mindfuck', 'brainrot'] as const
 
+/** Home carousel sentinel: not stored on titles. */
+export const ALL_MOOD = 'all'
+
 export type MoodTag = (typeof MOOD_TAGS)[number]
 
 /** Conversational display labels; stored mood_tags values stay unchanged. */

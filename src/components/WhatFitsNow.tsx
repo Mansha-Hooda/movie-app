@@ -7,7 +7,7 @@ import { TitleGrid } from '@/components/TitleGrid'
 import { UndoWatchedToast } from '@/components/UndoWatchedToast'
 import { WatchedProgress } from '@/components/WatchedProgress'
 import { useBacklogTitles } from '@/hooks/useBacklogTitles'
-import { MOOD_TAGS } from '@/lib/titles/constants'
+import { ALL_MOOD, MOOD_TAGS } from '@/lib/titles/constants'
 import { customMoodsFromTitles, loadCustomMoods, mergeMoodOptions } from '@/lib/titles/moods'
 import { filterTitles, hasActiveFilters } from '@/lib/titles/filter'
 import type { Title } from '@/types/database'
@@ -26,19 +26,21 @@ export function WhatFitsNow({ userId, initialTitles }: WhatFitsNowProps) {
     dismissUndo,
   } = useBacklogTitles(initialTitles)
   const [mediaType, setMediaType] = useState<MediaTypeTab>('all')
-  const [moodOptions, setMoodOptions] = useState<string[]>([...MOOD_TAGS])
-  const [mood, setMood] = useState<string>(MOOD_TAGS[0])
+  const [moodOptions, setMoodOptions] = useState<string[]>([ALL_MOOD, ...MOOD_TAGS])
+  const [mood, setMood] = useState<string>(ALL_MOOD)
 
   useEffect(() => {
-    const nextMoods = mergeMoodOptions(
-      loadCustomMoods(userId),
-      customMoodsFromTitles(titles),
-    )
+    const nextMoods = [
+      ALL_MOOD,
+      ...mergeMoodOptions(loadCustomMoods(userId), customMoodsFromTitles(titles)).filter(
+        (tag) => tag !== ALL_MOOD,
+      ),
+    ]
     setMoodOptions(nextMoods)
-    setMood((current) => (nextMoods.includes(current) ? current : nextMoods[0]))
+    setMood((current) => (nextMoods.includes(current) ? current : ALL_MOOD))
   }, [userId, titles])
 
-  const moods = useMemo(() => [mood], [mood])
+  const moods = useMemo(() => (mood === ALL_MOOD ? [] : [mood]), [mood])
   const filters = useMemo(
     () => ({ moods, mediaType }),
     [moods, mediaType],
@@ -47,7 +49,10 @@ export function WhatFitsNow({ userId, initialTitles }: WhatFitsNowProps) {
   const filtersActive = hasActiveFilters(filters)
 
   const moodTitles = useMemo(
-    () => titles.filter((title) => title.mood_tags.includes(mood)),
+    () =>
+      mood === ALL_MOOD
+        ? titles
+        : titles.filter((title) => title.mood_tags.includes(mood)),
     [titles, mood],
   )
   const moodTotal = moodTitles.length
