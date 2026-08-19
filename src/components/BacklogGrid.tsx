@@ -27,7 +27,7 @@ export function BacklogGrid({ titles: initialTitles }: BacklogGridProps) {
   const [mediaType, setMediaType] = useState<MediaTypeTab>('all')
 
   const filtered = useMemo(
-    () => filterTitles(titles, { moods: [], time: null, mediaType }),
+    () => filterTitles(titles, { moods: [], mediaType }),
     [titles, mediaType],
   )
 

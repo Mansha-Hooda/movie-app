@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'r
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createTitle } from '@/lib/titles/api'
-import { MEDIA_TYPES, TIME_COMMITMENTS } from '@/lib/titles/constants'
+import { MEDIA_TYPES, WATCH_LATER_OPTIONS } from '@/lib/titles/constants'
 import { moodsFromGenre } from '@/lib/genre-mood-map'
 import {
   addCustomMood,
@@ -17,7 +17,7 @@ import {
   uniqueMoods,
 } from '@/lib/titles/moods'
 import type { EnrichmentData, SearchResult } from '@/lib/enrichment/types'
-import type { MediaType, TimeCommitment, Title } from '@/types/database'
+import type { MediaType, Title, WatchLater } from '@/types/database'
 
 type TitleFormProps = {
   userId: string
@@ -63,7 +63,7 @@ export function TitleForm({
   const [moodTags, setMoodTags] = useState<string[]>([])
   const [customMoods, setCustomMoods] = useState<string[]>([])
   const [customMoodInput, setCustomMoodInput] = useState('')
-  const [timeCommitment, setTimeCommitment] = useState<TimeCommitment>('medium')
+  const [watchLater, setWatchLater] = useState<WatchLater>('soon')
   const [enrichment, setEnrichment] = useState<EnrichmentFields>(EMPTY_ENRICHMENT)
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
@@ -250,7 +250,7 @@ export function TitleForm({
       media_type: mediaType,
       suggested_by: suggestedBy,
       mood_tags: tags,
-      time_commitment: timeCommitment,
+      time_commitment: watchLater,
       poster_url: enrichment.poster_url,
       genre: enrichment.genre,
       runtime_or_pages: enrichment.runtime_or_pages,
@@ -444,15 +444,15 @@ export function TitleForm({
       </div>
 
       <div>
-        <span className="mb-2 block text-sm text-muted">Time commitment</span>
+        <span className="mb-2 block text-sm text-muted">Watch later</span>
         <div className="flex flex-wrap gap-2">
-          {TIME_COMMITMENTS.map((option) => {
-            const selected = timeCommitment === option.value
+          {WATCH_LATER_OPTIONS.map((option) => {
+            const selected = watchLater === option.value
             return (
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setTimeCommitment(option.value)}
+                onClick={() => setWatchLater(option.value)}
                 className={`chip ${selected ? 'chip-on' : 'chip-off'}`}
               >
                 {option.label}

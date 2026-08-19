@@ -2,9 +2,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
   Database,
   MediaType,
-  TimeCommitment,
   Title,
   TitleStatus,
+  WatchLater,
 } from '@/types/database'
 
 export type CreateTitleInput = {
@@ -12,7 +12,7 @@ export type CreateTitleInput = {
   media_type: MediaType
   suggested_by?: string
   mood_tags: string[]
-  time_commitment: TimeCommitment
+  time_commitment: WatchLater
   poster_url?: string | null
   genre?: string | null
   runtime_or_pages?: number | null

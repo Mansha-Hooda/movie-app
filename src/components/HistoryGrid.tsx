@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { MediaTypeTabs, type MediaTypeTab } from '@/components/MediaTypeTabs'
 import { TitleGrid } from '@/components/TitleGrid'
 import { useBacklogTitles } from '@/hooks/useBacklogTitles'
+import { sortByWatchLater } from '@/lib/titles/filter'
 import type { Title } from '@/types/database'
 
 type HistoryGridProps = {
@@ -23,11 +24,12 @@ export function HistoryGrid({ titles: initialTitles }: HistoryGridProps) {
   const [mediaType, setMediaType] = useState<MediaTypeTab>('all')
 
   const filtered = useMemo(() => {
-    return titles.filter((title) => {
+    const done = titles.filter((title) => {
       if (title.status !== 'done') return false
       if (mediaType !== 'all' && title.media_type !== mediaType) return false
       return true
     })
+    return sortByWatchLater(done)
   }, [titles, mediaType])
 
   return (

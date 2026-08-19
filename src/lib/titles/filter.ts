@@ -1,35 +1,44 @@
-import type { MediaType, TimeCommitment, Title } from '@/types/database'
+import { WATCH_LATER_ORDER } from '@/lib/titles/constants'
+import type { MediaType, Title } from '@/types/database'
 
 export type MediaTypeFilter = MediaType | 'all'
 
 export type TitleFilters = {
   moods: string[]
-  time: TimeCommitment | null
   mediaType?: MediaTypeFilter
 }
 
-/** True when mood and/or time filters are active (media tab is separate). */
-export function hasMoodOrTimeFilters(filters: TitleFilters): boolean {
-  return filters.moods.length > 0 || filters.time !== null
+/** True when mood filters are active (media tab is separate). */
+export function hasMoodFilters(filters: TitleFilters): boolean {
+  return filters.moods.length > 0
 }
 
 /** True when any filter including a non-All media tab is active. */
 export function hasActiveFilters(filters: TitleFilters): boolean {
   const mediaActive = Boolean(filters.mediaType && filters.mediaType !== 'all')
-  return hasMoodOrTimeFilters(filters) || mediaActive
+  return hasMoodFilters(filters) || mediaActive
+}
+
+export function sortByWatchLater(titles: Title[]): Title[] {
+  return [...titles].sort((a, b) => {
+    const orderA = WATCH_LATER_ORDER[a.time_commitment] ?? 3
+    const orderB = WATCH_LATER_ORDER[b.time_commitment] ?? 3
+    return orderA - orderB
+  })
 }
 
 /**
  * Filters titles for list views.
  * - Always hide status === 'done' (watched items are counted separately).
- * - Mood/time inactive: show backlog and in_progress.
- * - Mood/time active: only status === 'backlog', plus mood overlap and/or time match.
+ * - Mood inactive: show backlog and in_progress.
+ * - Mood active: only status === 'backlog', plus mood overlap.
  * - mediaType (when not 'all'): further restrict to that media_type.
+ * - Sorted tonight, then weekend, then soon.
  */
 export function filterTitles(titles: Title[], filters: TitleFilters): Title[] {
   let results = titles.filter((title) => title.status !== 'done')
 
-  if (hasMoodOrTimeFilters(filters)) {
+  if (hasMoodFilters(filters)) {
     results = results.filter((title) => {
       if (title.status !== 'backlog') {
         return false
@@ -42,10 +51,6 @@ export function filterTitles(titles: Title[], filters: TitleFilters): Title[] {
         }
       }
 
-      if (filters.time !== null && title.time_commitment !== filters.time) {
-        return false
-      }
-
       return true
     })
   }
@@ -54,5 +59,5 @@ export function filterTitles(titles: Title[], filters: TitleFilters): Title[] {
     results = results.filter((title) => title.media_type === filters.mediaType)
   }
 
-  return results
+  return sortByWatchLater(results)
 }

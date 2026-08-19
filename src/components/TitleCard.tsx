@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { BookOpen, Clapperboard, Tv } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { updateTitleStatus } from '@/lib/titles/api'
-import { TIME_COMMITMENTS, TITLE_STATUSES } from '@/lib/titles/constants'
+import { WATCH_LATER_OPTIONS, TITLE_STATUSES } from '@/lib/titles/constants'
 import type { Title, TitleStatus } from '@/types/database'
 
 type TitleCardProps = {
@@ -46,8 +46,8 @@ export function TitleCard({ title: initialTitle, onUpdate }: TitleCardProps) {
     }
   }
 
-  const timeLabel =
-    TIME_COMMITMENTS.find((option) => option.value === title.time_commitment)?.label ??
+  const watchLaterLabel =
+    WATCH_LATER_OPTIONS.find((option) => option.value === title.time_commitment)?.label ??
     title.time_commitment
 
   return (
@@ -76,7 +76,7 @@ export function TitleCard({ title: initialTitle, onUpdate }: TitleCardProps) {
 
       <h2 className="text-[0.95rem] font-medium leading-snug text-fg">{title.name}</h2>
       <p className="mt-0.5 text-sm text-muted">
-        {timeLabel} · {title.media_type}
+        {watchLaterLabel} · {title.media_type}
       </p>
 
       <label htmlFor={`status-${title.id}`} className="sr-only">

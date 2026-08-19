@@ -1,4 +1,4 @@
-import type { MediaType, TimeCommitment, TitleStatus } from '@/types/database'
+import type { MediaType, TitleStatus, WatchLater } from '@/types/database'
 
 export const MEDIA_TYPES: { value: MediaType; label: string }[] = [
   { value: 'movie', label: 'Movie' },
@@ -18,11 +18,21 @@ export const MOOD_DISPLAY_LABELS: Record<MoodTag, string> = {
   brainrot: 'Brainrot',
 }
 
-export const TIME_COMMITMENTS: { value: TimeCommitment; label: string }[] = [
-  { value: 'quick', label: 'Quick' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'long', label: 'Long' },
+export const WATCH_LATER_OPTIONS: { value: WatchLater; label: string }[] = [
+  { value: 'tonight', label: 'Tonight' },
+  { value: 'weekend', label: 'Weekend' },
+  { value: 'soon', label: 'Soon' },
 ]
+
+/** tonight → weekend → soon (legacy duration values map to the same order). */
+export const WATCH_LATER_ORDER: Record<string, number> = {
+  tonight: 0,
+  weekend: 1,
+  soon: 2,
+  quick: 0,
+  medium: 1,
+  long: 2,
+}
 
 export const TITLE_STATUSES: { value: TitleStatus; label: string }[] = [
   { value: 'backlog', label: 'Backlog' },

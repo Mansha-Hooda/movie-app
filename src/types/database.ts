@@ -1,5 +1,5 @@
 export type MediaType = 'movie' | 'show' | 'book'
-export type TimeCommitment = 'quick' | 'medium' | 'long'
+export type WatchLater = 'tonight' | 'weekend' | 'soon'
 export type TitleStatus = 'backlog' | 'in_progress' | 'done'
 
 /** Row shape for the existing Supabase `titles` table. */
@@ -10,7 +10,7 @@ export type Title = {
   media_type: MediaType
   suggested_by: string | null
   mood_tags: string[]
-  time_commitment: TimeCommitment
+  time_commitment: WatchLater
   status: TitleStatus
   rating: number | null
   poster_url: string | null
@@ -32,7 +32,7 @@ export type Database = {
           media_type: MediaType
           suggested_by?: string | null
           mood_tags?: string[]
-          time_commitment: TimeCommitment
+          time_commitment: WatchLater
           status?: TitleStatus
           rating?: number | null
           poster_url?: string | null
@@ -46,7 +46,7 @@ export type Database = {
           media_type?: MediaType
           suggested_by?: string | null
           mood_tags?: string[]
-          time_commitment?: TimeCommitment
+          time_commitment?: WatchLater
           status?: TitleStatus
           rating?: number | null
           poster_url?: string | null
