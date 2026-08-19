@@ -19,7 +19,32 @@ export function hasActiveFilters(filters: TitleFilters): boolean {
   return hasMoodFilters(filters) || mediaActive
 }
 
-export function sortByWatchLater(titles: Title[]): Title[] {
+export function uniqueTitles(titles: Title[]): Title[] {
+  const seen = new Set<string>()
+  const unique: Title[] = []
+
+  for (const title of titles) {
+    if (seen.has(title.id)) continue
+    seen.add(title.id)
+    unique.push(title)
+  }
+
+  return unique
+}
+
+export function uniqueTitlesByName(titles: Title[]): Title[] {
+  const seen = new Set<string>()
+  const unique: Title[] = []
+
+  for (const title of uniqueTitles(titles)) {
+    const key = `${title.media_type}::${title.name.trim().toLowerCase()}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    unique.push(title)
+  }
+
+  return unique
+}
   return [...titles].sort((a, b) => {
     const orderA = WATCH_LATER_ORDER[a.time_commitment] ?? 3
     const orderB = WATCH_LATER_ORDER[b.time_commitment] ?? 3
@@ -36,7 +61,7 @@ export function sortByWatchLater(titles: Title[]): Title[] {
  * - Sorted tonight, then weekend, then soon.
  */
 export function filterTitles(titles: Title[], filters: TitleFilters): Title[] {
-  let results = titles.filter((title) => title.status !== 'done')
+  let results = uniqueTitles(titles).filter((title) => title.status !== 'done')
 
   if (hasMoodFilters(filters)) {
     results = results.filter((title) => {

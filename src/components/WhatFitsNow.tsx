@@ -9,7 +9,7 @@ import { WatchedProgress } from '@/components/WatchedProgress'
 import { useBacklogTitles } from '@/hooks/useBacklogTitles'
 import { ALL_MOOD, MOOD_TAGS } from '@/lib/titles/constants'
 import { customMoodsFromTitles, loadCustomMoods, mergeMoodOptions } from '@/lib/titles/moods'
-import { filterTitles, hasActiveFilters } from '@/lib/titles/filter'
+import { filterTitles, hasActiveFilters, uniqueTitles, uniqueTitlesByName } from '@/lib/titles/filter'
 import type { Title } from '@/types/database'
 
 type WhatFitsNowProps = {
@@ -45,14 +45,17 @@ export function WhatFitsNow({ userId, initialTitles }: WhatFitsNowProps) {
     () => ({ moods, mediaType }),
     [moods, mediaType],
   )
-  const filtered = useMemo(() => filterTitles(titles, filters), [titles, filters])
+  const filtered = useMemo(() => {
+    const list = filterTitles(titles, filters)
+    return mood === ALL_MOOD ? uniqueTitlesByName(list) : list
+  }, [titles, filters, mood])
   const filtersActive = hasActiveFilters(filters)
 
   const moodTitles = useMemo(
     () =>
       mood === ALL_MOOD
-        ? titles
-        : titles.filter((title) => title.mood_tags.includes(mood)),
+        ? uniqueTitlesByName(titles)
+        : uniqueTitles(titles.filter((title) => title.mood_tags.includes(mood))),
     [titles, mood],
   )
   const moodTotal = moodTitles.length
