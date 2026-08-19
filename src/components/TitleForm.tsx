@@ -157,25 +157,26 @@ export function TitleForm({
     )
   }
 
-  function handleAddCustomMood() {
+  function commitCustomMoodInput(currentTags: string[] = moodTags): string[] {
     const builtIn = matchBuiltInMood(customMoodInput)
     if (builtIn) {
-      setMoodTags((current) =>
-        current.includes(builtIn) ? current : [...current, builtIn],
-      )
       setCustomMoodInput('')
-      return
+      return currentTags.includes(builtIn) ? currentTags : [...currentTags, builtIn]
     }
 
     const trimmed = customMoodInput.trim().replace(/\s+/g, ' ')
-    if (!trimmed) return
+    if (!trimmed) return currentTags
 
     const nextCustom = addCustomMood(userId, trimmed)
     const stored =
       nextCustom.find((mood) => mood.toLowerCase() === trimmed.toLowerCase()) ?? trimmed
     setCustomMoods(nextCustom)
-    setMoodTags((current) => (current.includes(stored) ? current : [...current, stored]))
     setCustomMoodInput('')
+    return currentTags.includes(stored) ? currentTags : [...currentTags, stored]
+  }
+
+  function handleAddCustomMood() {
+    setMoodTags(commitCustomMoodInput())
   }
 
   function clearEnrichmentOnManualEdit(nextName: string) {
@@ -240,12 +241,15 @@ export function TitleForm({
     setError(null)
     setSubmitting(true)
 
+    const tags = commitCustomMoodInput()
+    setMoodTags(tags)
+
     const supabase = createClient()
     const { error: createError } = await createTitle(supabase, userId, {
       name,
       media_type: mediaType,
       suggested_by: suggestedBy,
-      mood_tags: moodTags,
+      mood_tags: tags,
       time_commitment: timeCommitment,
       poster_url: enrichment.poster_url,
       genre: enrichment.genre,
@@ -260,7 +264,7 @@ export function TitleForm({
       return
     }
 
-    saveCustomMoods(userId, [...loadCustomMoods(userId), ...moodTags])
+    saveCustomMoods(userId, [...loadCustomMoods(userId), ...tags])
 
     router.push('/')
     router.refresh()
@@ -405,8 +409,25 @@ export function TitleForm({
       </div>
 
       <div>
-        <span className="mb-2 block text-sm text-muted">Moods</span>
-        <div className="flex flex-wrap gap-2">
+        <label htmlFor="custom_mood" className="mb-1 block text-sm text-muted">
+          Moods
+        </label>
+        <input
+          id="custom_mood"
+          type="text"
+          value={customMoodInput}
+          onChange={(event) => setCustomMoodInput(event.target.value)}
+          onBlur={handleAddCustomMood}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              handleAddCustomMood()
+            }
+          }}
+          placeholder="Add your own mood"
+          className="field"
+        />
+        <div className="mt-2 flex flex-wrap gap-2">
           {moodOptions.map((tag) => {
             const selected = moodTags.includes(tag)
             return (
@@ -420,30 +441,6 @@ export function TitleForm({
               </button>
             )
           })}
-        </div>
-        <div className="mt-3 flex gap-2">
-          <input
-            id="custom_mood"
-            type="text"
-            value={customMoodInput}
-            onChange={(event) => setCustomMoodInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault()
-                handleAddCustomMood()
-              }
-            }}
-            placeholder="Add your own mood"
-            className="field"
-          />
-          <button
-            type="button"
-            onClick={handleAddCustomMood}
-            disabled={!customMoodInput.trim()}
-            className="btn-secondary shrink-0 px-3"
-          >
-            Add
-          </button>
         </div>
       </div>
 
