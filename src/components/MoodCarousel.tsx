@@ -31,7 +31,7 @@ export function MoodCarousel({ value, onChange }: MoodCarouselProps) {
         : 'translate-x-0 opacity-100'
 
   return (
-    <div className="mb-6 text-center">
+    <div className="text-center">
       <p className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-accent">
         mood
       </p>

@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { AppHeader } from '@/components/AppHeader'
 import { TitleForm } from '@/components/TitleForm'
 import { createClient } from '@/lib/supabase/server'
 import type { MediaType } from '@/types/database'
@@ -33,13 +33,9 @@ export default async function AddPage({ searchParams }: AddPageProps) {
   const initialMediaType = parseMediaType(params.media_type)
 
   return (
-    <main className="mx-auto max-w-md px-6 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-medium text-fg">Add title</h1>
-        <Link href="/" className="text-sm text-accent transition-colors hover:brightness-110">
-          Back
-        </Link>
-      </div>
+    <main className="mx-auto max-w-md px-5 pb-12 pt-6">
+      <AppHeader email={user.email ?? ''} />
+      <h1 className="mb-6 text-xl font-medium text-fg">Add title</h1>
       <TitleForm
         userId={user.id}
         initialName={initialName}

@@ -22,8 +22,6 @@ export function WhatFitsNow({ initialTitles }: WhatFitsNowProps) {
     undo,
     undoWatched,
     dismissUndo,
-    watchedCount,
-    totalCount,
   } = useBacklogTitles(initialTitles)
   const [mediaType, setMediaType] = useState<MediaTypeTab>('all')
   const [mood, setMood] = useState<MoodTag>(MOOD_TAGS[0])
@@ -37,15 +35,22 @@ export function WhatFitsNow({ initialTitles }: WhatFitsNowProps) {
   const filtered = useMemo(() => filterTitles(titles, filters), [titles, filters])
   const filtersActive = hasActiveFilters(filters)
 
+  const moodTitles = useMemo(
+    () => titles.filter((title) => title.mood_tags.includes(mood)),
+    [titles, mood],
+  )
+  const moodTotal = moodTitles.length
+  const moodWatched = moodTitles.filter((title) => title.status === 'done').length
+
   const emptyMessage = filtersActive
     ? 'Nothing matches right now — try a different mood or type.'
     : 'Your backlog is empty — add something to watch or read.'
 
   return (
     <div>
-      <WatchedProgress watchedCount={watchedCount} totalCount={totalCount} />
-
       <MoodCarousel value={mood} onChange={setMood} />
+
+      <WatchedProgress watchedCount={moodWatched} totalCount={moodTotal} />
 
       <div className="mb-8">
         <MediaTypeTabs value={mediaType} onChange={setMediaType} />
