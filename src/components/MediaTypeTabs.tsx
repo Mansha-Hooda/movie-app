@@ -18,7 +18,7 @@ type MediaTypeTabsProps = {
 
 export function MediaTypeTabs({ value, onChange }: MediaTypeTabsProps) {
   return (
-    <div className="flex flex-wrap gap-2" role="tablist" aria-label="Media type">
+    <div className="flex flex-wrap justify-center gap-2" role="tablist" aria-label="Media type">
       {TABS.map((tab) => {
         const selected = value === tab.value
         return (
@@ -28,10 +28,10 @@ export function MediaTypeTabs({ value, onChange }: MediaTypeTabsProps) {
             role="tab"
             aria-selected={selected}
             onClick={() => onChange(tab.value)}
-            className={`rounded-md border px-3 py-1.5 text-sm ${
+            className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors duration-200 ${
               selected
-                ? 'border-gray-900 bg-gray-900 text-white'
-                : 'border-gray-300 text-gray-700'
+                ? 'border-accent bg-accent text-ink'
+                : 'border-border bg-transparent text-muted'
             }`}
           >
             {tab.label}

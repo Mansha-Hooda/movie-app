@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { MediaTypeTabs, type MediaTypeTab } from '@/components/MediaTypeTabs'
+import { MoodCarousel } from '@/components/MoodCarousel'
 import { TitleGrid } from '@/components/TitleGrid'
 import { UndoWatchedToast } from '@/components/UndoWatchedToast'
 import { WatchedProgress } from '@/components/WatchedProgress'
@@ -25,9 +26,10 @@ export function WhatFitsNow({ initialTitles }: WhatFitsNowProps) {
     totalCount,
   } = useBacklogTitles(initialTitles)
   const [mediaType, setMediaType] = useState<MediaTypeTab>('all')
-  const [moods, setMoods] = useState<MoodTag[]>([])
+  const [mood, setMood] = useState<MoodTag>(MOOD_TAGS[0])
   const [time, setTime] = useState<TimeCommitment | null>(null)
 
+  const moods = useMemo(() => [mood], [mood])
   const filters = useMemo(
     () => ({ moods, time, mediaType }),
     [moods, time, mediaType],
@@ -35,76 +37,39 @@ export function WhatFitsNow({ initialTitles }: WhatFitsNowProps) {
   const filtered = useMemo(() => filterTitles(titles, filters), [titles, filters])
   const filtersActive = hasActiveFilters(filters)
 
-  function toggleMood(tag: MoodTag) {
-    setMoods((current) =>
-      current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag],
-    )
-  }
-
-  function toggleTime(value: TimeCommitment) {
-    setTime((current) => (current === value ? null : value))
-  }
-
   const emptyMessage = filtersActive
-    ? 'Nothing matches right now — try different filters.'
+    ? 'Nothing matches right now — try a different mood or type.'
     : 'Your backlog is empty — add something to watch or read.'
 
   return (
     <div>
       <WatchedProgress watchedCount={watchedCount} totalCount={totalCount} />
 
-      <section className="mb-8 mt-4 space-y-4">
-        <div>
-          <h2 className="mb-2 text-sm font-medium text-gray-700">Type</h2>
-          <MediaTypeTabs value={mediaType} onChange={setMediaType} />
-        </div>
+      <MoodCarousel value={mood} onChange={setMood} />
 
-        <div>
-          <h2 className="mb-2 text-sm font-medium text-gray-700">Mood</h2>
-          <div className="flex flex-wrap gap-2">
-            {MOOD_TAGS.map((tag) => {
-              const selected = moods.includes(tag)
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggleMood(tag)}
-                  className={`rounded-full border px-3 py-1 text-sm ${
-                    selected
-                      ? 'border-gray-900 bg-gray-900 text-white'
-                      : 'border-gray-300 text-gray-700'
-                  }`}
-                >
-                  {tag}
-                </button>
-              )
-            })}
-          </div>
-        </div>
+      <div className="mb-8">
+        <MediaTypeTabs value={mediaType} onChange={setMediaType} />
+      </div>
 
-        <div>
-          <h2 className="mb-2 text-sm font-medium text-gray-700">Time</h2>
-          <div className="flex flex-wrap gap-2">
-            {TIME_COMMITMENTS.map((option) => {
-              const selected = time === option.value
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => toggleTime(option.value)}
-                  className={`rounded-full border px-3 py-1 text-sm ${
-                    selected
-                      ? 'border-gray-900 bg-gray-900 text-white'
-                      : 'border-gray-300 text-gray-700'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </section>
+      <div className="mb-6 flex flex-wrap justify-center gap-2">
+        {TIME_COMMITMENTS.map((option) => {
+          const selected = time === option.value
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setTime((current) => (current === option.value ? null : option.value))}
+              className={`rounded-full border px-3 py-1 text-xs transition-colors duration-200 ${
+                selected
+                  ? 'border-accent bg-accent text-ink'
+                  : 'border-border text-muted'
+              }`}
+            >
+              {option.label}
+            </button>
+          )
+        })}
+      </div>
 
       <TitleGrid
         titles={filtered}

@@ -224,20 +224,20 @@ export function ShareHandlerClient() {
         <img
           src={previewUrl}
           alt="Screenshot being identified"
-          className="mx-auto max-h-64 rounded-md border border-gray-200 object-contain"
+          className="mx-auto max-h-64 rounded-md border border-border object-contain"
         />
       )}
 
       {phase === 'idle' && (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center">
-          <p className="mb-4 text-sm text-gray-700">
+        <div className="rounded-xl border border-border bg-surface p-6 text-center">
+          <p className="mb-4 text-sm text-muted">
             Share a screenshot into this app from Android, or upload one here to
             test on desktop.
           </p>
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white"
+            className="rounded-full bg-accent px-4 py-2 text-sm text-ink"
           >
             Upload screenshot
           </button>
@@ -245,34 +245,34 @@ export function ShareHandlerClient() {
       )}
 
       {phase === 'loading' && (
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-muted">
           Preparing image and identifying title…
         </p>
       )}
 
       {phase === 'confirm' && guess && (
-        <div className="rounded-lg border border-gray-200 p-4">
-          <p className="mb-1 text-xs uppercase tracking-wide text-gray-500">
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <p className="mb-1 text-xs uppercase tracking-wide text-accent">
             Is this it?
           </p>
-          <p className="text-lg font-medium text-gray-900">{guess.name}</p>
-          <p className="mb-1 text-sm text-gray-600">
+          <p className="text-lg font-medium text-fg">{guess.name}</p>
+          <p className="mb-1 text-sm text-muted">
             {mediaLabel(guess.media_type)}
           </p>
-          <p className="mb-4 text-xs text-gray-500">
+          <p className="mb-4 text-xs text-muted">
             Confidence: {Math.round(guess.confidence * 100)}%
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
               onClick={handleConfirm}
-              className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white"
+              className="rounded-full bg-accent px-4 py-2 text-sm text-ink"
             >
               Yes, that&apos;s it
             </button>
             <Link
               href="/add"
-              className="rounded-md border border-gray-300 px-4 py-2 text-center text-sm text-gray-700"
+              className="rounded-full border border-border px-4 py-2 text-center text-sm text-muted"
             >
               Not quite, let me search
             </Link>
@@ -281,20 +281,20 @@ export function ShareHandlerClient() {
       )}
 
       {phase === 'fallback' && (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <p className="mb-2 font-medium text-gray-900">{fallbackTitle}</p>
-          <p className="mb-4 text-sm text-gray-600">{fallbackBody}</p>
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <p className="mb-2 font-medium text-fg">{fallbackTitle}</p>
+          <p className="mb-4 text-sm text-muted">{fallbackBody}</p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700"
+              className="rounded-full border border-border px-4 py-2 text-sm text-muted"
             >
               Try another image
             </button>
             <Link
               href="/add"
-              className="rounded-md bg-gray-900 px-4 py-2 text-center text-sm text-white"
+              className="rounded-full bg-accent px-4 py-2 text-center text-sm text-ink"
             >
               Search manually
             </Link>
@@ -312,7 +312,7 @@ export function ShareHandlerClient() {
             setErrorKind(null)
             setPhase('idle')
           }}
-          className="text-sm text-gray-600 underline"
+          className="text-sm text-muted underline"
         >
           Start over
         </button>

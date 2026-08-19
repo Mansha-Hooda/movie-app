@@ -23,12 +23,12 @@ export function TitleGrid({
 }: TitleGridProps) {
   if (titles.length === 0) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
-        <p className="mb-4 text-gray-700">{emptyMessage}</p>
+      <div className="rounded-xl border border-border bg-surface p-8 text-center">
+        <p className="mb-4 text-muted">{emptyMessage}</p>
         {emptyAction && (
           <Link
             href={emptyAction.href}
-            className="inline-block rounded-md bg-gray-900 px-4 py-2 text-sm text-white"
+            className="inline-block rounded-full bg-accent px-4 py-2 text-sm text-ink"
           >
             {emptyAction.label}
           </Link>
@@ -38,7 +38,7 @@ export function TitleGrid({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-2 gap-x-3 gap-y-6">
       {titles.map((title) => (
         <TitleCard key={title.id} title={title} onUpdate={onTitleUpdate} />
       ))}

@@ -1,5 +1,17 @@
 @import 'tailwindcss';
 
+@theme {
+  --color-page: #121014;
+  --color-surface: #1c1a20;
+  --color-fg: #f5f4f7;
+  --color-muted: #6b6874;
+  --color-border: #332f3d;
+  --color-accent: #8b7fff;
+  --color-ink: #121014;
+}
+
 body {
   margin: 0;
+  background-color: var(--color-page);
+  color: var(--color-fg);
 }

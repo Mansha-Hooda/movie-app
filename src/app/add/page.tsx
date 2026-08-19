@@ -35,8 +35,8 @@ export default async function AddPage({ searchParams }: AddPageProps) {
   return (
     <main className="mx-auto max-w-md px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Add title</h1>
-        <Link href="/" className="text-sm text-gray-700 underline">
+        <h1 className="text-2xl font-medium text-fg">Add title</h1>
+        <Link href="/" className="text-sm text-muted transition-colors hover:text-fg">
           Back
         </Link>
       </div>

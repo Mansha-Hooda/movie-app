@@ -1,14 +1,22 @@
 'use client'
 
 import { useState } from 'react'
+import { BookOpen, Clapperboard, Tv } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { updateTitleStatus } from '@/lib/titles/api'
-import { TITLE_STATUSES } from '@/lib/titles/constants'
+import { TIME_COMMITMENTS, TITLE_STATUSES } from '@/lib/titles/constants'
 import type { Title, TitleStatus } from '@/types/database'
 
 type TitleCardProps = {
   title: Title
   onUpdate?: (title: Title) => void
+}
+
+function TypeIcon({ type }: { type: Title['media_type'] }) {
+  const className = 'h-4 w-4 text-fg/80'
+  if (type === 'show') return <Tv className={className} strokeWidth={1.75} />
+  if (type === 'book') return <BookOpen className={className} strokeWidth={1.75} />
+  return <Clapperboard className={className} strokeWidth={1.75} />
 }
 
 export function TitleCard({ title: initialTitle, onUpdate }: TitleCardProps) {
@@ -38,9 +46,13 @@ export function TitleCard({ title: initialTitle, onUpdate }: TitleCardProps) {
     }
   }
 
+  const timeLabel =
+    TIME_COMMITMENTS.find((option) => option.value === title.time_commitment)?.label ??
+    title.time_commitment
+
   return (
-    <article className="rounded-lg border border-gray-200 p-4">
-      <div className="mb-3 overflow-hidden rounded bg-gray-100">
+    <article className="active:scale-95 transition-transform duration-150 ease-out">
+      <div className="relative mb-2.5 overflow-hidden rounded-xl bg-surface">
         {title.poster_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -49,63 +61,43 @@ export function TitleCard({ title: initialTitle, onUpdate }: TitleCardProps) {
             className="aspect-[2/3] w-full object-cover"
           />
         ) : (
-          <div className="flex aspect-[2/3] w-full items-center justify-center text-sm text-gray-400">
-            No poster
-          </div>
+          <div
+            className="aspect-[2/3] w-full"
+            style={{
+              background:
+                'linear-gradient(160deg, #2a2633 0%, #1c1a20 45%, #332f3d 100%)',
+            }}
+          />
         )}
-      </div>
-
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <h2 className="font-medium text-gray-900">{title.name}</h2>
-        <span className="shrink-0 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-          {title.media_type}
+        <span className="absolute top-2 right-2 rounded-full bg-page/55 p-1.5 backdrop-blur-[2px]">
+          <TypeIcon type={title.media_type} />
         </span>
       </div>
 
-      {title.genre && (
-        <p className="mb-2 text-sm text-gray-600">{title.genre}</p>
-      )}
+      <h2 className="text-[0.95rem] font-medium leading-snug text-fg">{title.name}</h2>
+      <p className="mt-0.5 text-sm text-muted">
+        {timeLabel} · {title.media_type}
+      </p>
 
-      {title.mood_tags.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-1">
-          {title.mood_tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-gray-200 px-2 py-0.5 text-xs text-gray-600"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-
-      <p className="mb-2 text-sm text-gray-600">Time: {title.time_commitment}</p>
-
-      {title.suggested_by && (
-        <p className="mb-2 text-sm text-gray-600">Suggested by {title.suggested_by}</p>
-      )}
-
-      <div className="mb-2">
-        <label htmlFor={`status-${title.id}`} className="mb-1 block text-xs text-gray-500">
-          Status
-        </label>
-        <select
-          id={`status-${title.id}`}
-          value={title.status}
-          disabled={updating}
-          onChange={(event) => handleStatusChange(event.target.value as TitleStatus)}
-          className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-900 disabled:opacity-60"
-        >
-          {TITLE_STATUSES.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <label htmlFor={`status-${title.id}`} className="sr-only">
+        Status
+      </label>
+      <select
+        id={`status-${title.id}`}
+        value={title.status}
+        disabled={updating}
+        onChange={(event) => handleStatusChange(event.target.value as TitleStatus)}
+        className="mt-2 w-full rounded-lg border border-border bg-surface px-2 py-1 text-xs text-muted disabled:opacity-60"
+      >
+        {TITLE_STATUSES.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
 
       {error && (
-        <p className="mt-2 text-xs text-red-600" role="alert">
+        <p className="mt-1 text-xs text-accent" role="alert">
           {error}
         </p>
       )}

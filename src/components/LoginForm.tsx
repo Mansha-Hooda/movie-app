@@ -36,15 +36,15 @@ export function LoginForm() {
 
   if (step === 'sent') {
     return (
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center">
-        <p className="mb-2 font-medium text-gray-900">Check your email</p>
-        <p className="text-sm text-gray-600">
-          We sent a sign-in link to <span className="font-medium">{email}</span>.
+      <div className="rounded-xl border border-border bg-surface p-6 text-center">
+        <p className="mb-2 font-medium text-fg">Check your email</p>
+        <p className="text-sm text-muted">
+          We sent a sign-in link to <span className="font-medium text-fg">{email}</span>.
         </p>
         <button
           type="button"
           onClick={() => setStep('email')}
-          className="mt-4 text-sm text-gray-700 underline"
+          className="mt-4 text-sm text-muted underline"
         >
           Use a different email
         </button>
@@ -55,7 +55,7 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="email" className="mb-1 block text-sm text-gray-700">
+        <label htmlFor="email" className="mb-1 block text-sm text-muted">
           Email
         </label>
         <input
@@ -66,12 +66,12 @@ export function LoginForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@example.com"
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900"
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-fg placeholder:text-muted"
         />
       </div>
 
       {error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-accent" role="alert">
           {error}
         </p>
       )}
@@ -79,7 +79,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-md bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
+        className="w-full rounded-full bg-accent px-4 py-2 text-ink disabled:opacity-60"
       >
         {submitting ? 'Sending…' : 'Send magic link'}
       </button>

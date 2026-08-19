@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#4f46e5',
+  themeColor: '#121014',
 }
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-svh bg-white text-gray-900 antialiased">
+      <body className="min-h-svh bg-page text-fg antialiased">
         <PwaRegister />
         {children}
       </body>

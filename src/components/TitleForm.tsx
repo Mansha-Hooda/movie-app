@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { createTitle } from '@/lib/titles/api'
 import {
   MEDIA_TYPES,
+  MOOD_DISPLAY_LABELS,
   MOOD_TAGS,
   TIME_COMMITMENTS,
   type MoodTag,
@@ -234,14 +235,14 @@ export function TitleForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="media_type" className="mb-1 block text-sm text-gray-700">
+        <label htmlFor="media_type" className="mb-1 block text-sm text-muted">
           Type
         </label>
         <select
           id="media_type"
           value={mediaType}
           onChange={(event) => setMediaType(event.target.value as MediaType)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900"
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-fg"
         >
           {MEDIA_TYPES.map((option) => (
             <option key={option.value} value={option.value}>
@@ -252,7 +253,7 @@ export function TitleForm({
       </div>
 
       <div className="relative">
-        <label htmlFor="name" className="mb-1 block text-sm text-gray-700">
+        <label htmlFor="name" className="mb-1 block text-sm text-muted">
           Name
         </label>
         <input
@@ -268,18 +269,18 @@ export function TitleForm({
           onBlur={() => {
             blurTimeout.current = setTimeout(() => setDropdownOpen(false), 150)
           }}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900"
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-fg"
         />
         {searching && (
-          <p className="mt-1 text-xs text-gray-500">Searching…</p>
+          <p className="mt-1 text-xs text-muted">Searching…</p>
         )}
         {selecting && (
-          <p className="mt-1 text-xs text-gray-500">Loading details…</p>
+          <p className="mt-1 text-xs text-muted">Loading details…</p>
         )}
 
         {dropdownOpen && results.length > 0 && (
           <ul
-            className="absolute z-10 mt-1 max-h-64 w-full overflow-auto rounded-md border border-gray-200 bg-white shadow-sm"
+            className="absolute z-10 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-border bg-surface shadow-sm"
             onMouseDown={(event) => event.preventDefault()}
           >
             {results.map((result) => (
@@ -290,7 +291,7 @@ export function TitleForm({
                     if (blurTimeout.current) clearTimeout(blurTimeout.current)
                     void handleSelectResult(result)
                   }}
-                  className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-gray-50"
+                  className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-page"
                 >
                   {result.poster_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -300,16 +301,16 @@ export function TitleForm({
                       className="h-12 w-8 shrink-0 rounded object-cover"
                     />
                   ) : (
-                    <div className="flex h-12 w-8 shrink-0 items-center justify-center rounded bg-gray-100 text-[10px] text-gray-400">
+                    <div className="flex h-12 w-8 shrink-0 items-center justify-center rounded bg-page text-[10px] text-muted">
                       N/A
                     </div>
                   )}
                   <span className="min-w-0">
-                    <span className="block truncate text-sm text-gray-900">
+                    <span className="block truncate text-sm text-fg">
                       {result.name}
                     </span>
                     {result.year && (
-                      <span className="text-xs text-gray-500">{result.year}</span>
+                      <span className="text-xs text-muted">{result.year}</span>
                     )}
                   </span>
                 </button>
@@ -320,7 +321,7 @@ export function TitleForm({
       </div>
 
       {hasEnrichment && (
-        <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+        <div className="rounded-lg border border-border bg-surface p-3 text-sm text-muted">
           <div className="flex gap-3">
             {enrichment.poster_url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -340,7 +341,7 @@ export function TitleForm({
                 </p>
               )}
               {enrichment.synopsis && (
-                <p className="line-clamp-3 text-xs text-gray-600">{enrichment.synopsis}</p>
+                <p className="line-clamp-3 text-xs text-muted">{enrichment.synopsis}</p>
               )}
             </div>
           </div>
@@ -348,8 +349,8 @@ export function TitleForm({
       )}
 
       <div>
-        <label htmlFor="suggested_by" className="mb-1 block text-sm text-gray-700">
-          Suggested by <span className="text-gray-500">(optional)</span>
+        <label htmlFor="suggested_by" className="mb-1 block text-sm text-muted">
+          Suggested by <span className="text-muted/80">(optional)</span>
         </label>
         <input
           id="suggested_by"
@@ -358,12 +359,12 @@ export function TitleForm({
           onChange={(event: ChangeEvent<HTMLInputElement>) =>
             setSuggestedBy(event.target.value)
           }
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900"
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-fg"
         />
       </div>
 
       <div>
-        <span className="mb-2 block text-sm text-gray-700">Mood tags</span>
+        <span className="mb-2 block text-sm text-muted">Mood tags</span>
         <div className="flex flex-wrap gap-2">
           {MOOD_TAGS.map((tag) => {
             const selected = moodTags.includes(tag)
@@ -372,13 +373,13 @@ export function TitleForm({
                 key={tag}
                 type="button"
                 onClick={() => toggleMoodTag(tag)}
-                className={`rounded-full border px-3 py-1 text-sm ${
+                className={`rounded-full border px-3 py-1 text-sm transition-colors duration-200 ${
                   selected
-                    ? 'border-gray-900 bg-gray-900 text-white'
-                    : 'border-gray-300 text-gray-700'
+                    ? 'border-accent bg-accent text-ink'
+                    : 'border-border text-muted'
                 }`}
               >
-                {tag}
+                {MOOD_DISPLAY_LABELS[tag]}
               </button>
             )
           })}
@@ -386,14 +387,14 @@ export function TitleForm({
       </div>
 
       <div>
-        <label htmlFor="time_commitment" className="mb-1 block text-sm text-gray-700">
+        <label htmlFor="time_commitment" className="mb-1 block text-sm text-muted">
           Time commitment
         </label>
         <select
           id="time_commitment"
           value={timeCommitment}
           onChange={(event) => setTimeCommitment(event.target.value as TimeCommitment)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900"
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-fg"
         >
           {TIME_COMMITMENTS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -404,7 +405,7 @@ export function TitleForm({
       </div>
 
       {error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-accent" role="alert">
           {error}
         </p>
       )}
@@ -412,7 +413,7 @@ export function TitleForm({
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-md bg-gray-900 px-4 py-2 text-white disabled:opacity-60"
+        className="w-full rounded-full bg-accent px-4 py-2 text-ink disabled:opacity-60"
       >
         {submitting ? 'Adding…' : 'Add title'}
       </button>

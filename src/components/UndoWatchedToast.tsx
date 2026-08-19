@@ -15,22 +15,22 @@ export function UndoWatchedToast({ undo, onUndo, onDismiss }: UndoWatchedToastPr
 
   return (
     <div
-      className="fixed bottom-6 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-lg"
+      className="fixed bottom-6 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-lg"
       role="status"
     >
-      <p className="text-sm text-gray-800">Marked as watched. Undo?</p>
+      <p className="text-sm text-fg">Marked as watched. Undo?</p>
       <div className="flex shrink-0 items-center gap-2">
         <button
           type="button"
           onClick={onUndo}
-          className="rounded-md bg-gray-900 px-3 py-1 text-sm text-white"
+          className="rounded-full bg-accent px-3 py-1 text-sm text-ink"
         >
           Undo
         </button>
         <button
           type="button"
           onClick={onDismiss}
-          className="text-sm text-gray-500"
+          className="text-sm text-muted"
           aria-label="Dismiss"
         >
           ×

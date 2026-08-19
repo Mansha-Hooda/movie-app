@@ -5,7 +5,7 @@ type WatchedProgressProps = {
 
 export function WatchedProgress({ watchedCount, totalCount }: WatchedProgressProps) {
   return (
-    <p className="text-sm text-gray-600" aria-live="polite">
+    <p className="mb-4 text-center text-xs text-muted" aria-live="polite">
       {watchedCount} / {totalCount} watched
     </p>
   )

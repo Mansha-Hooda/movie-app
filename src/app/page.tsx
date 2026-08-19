@@ -20,8 +20,8 @@ export default async function HomePage() {
 
   if (error) {
     return (
-      <main className="mx-auto max-w-4xl px-6 py-8">
-        <p className="text-red-600" role="alert">
+      <main className="mx-auto max-w-4xl px-5 py-8">
+        <p className="text-accent" role="alert">
           Failed to load titles: {error.message}
         </p>
       </main>
@@ -29,22 +29,19 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-8">
-      <header className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">What fits now</h1>
-          <p className="text-sm text-gray-600">{user.email}</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/share-handler" className="text-sm text-gray-700 underline">
+    <main className="mx-auto max-w-lg px-5 pb-24 pt-6">
+      <header className="mb-6 flex items-center justify-between gap-3">
+        <p className="truncate text-xs text-muted">{user.email}</p>
+        <nav className="flex shrink-0 items-center gap-3 text-xs text-muted">
+          <Link href="/share-handler" className="transition-colors hover:text-fg">
             Screenshot
           </Link>
-          <Link href="/backlog" className="text-sm text-gray-700 underline">
-            Full backlog
+          <Link href="/backlog" className="transition-colors hover:text-fg">
+            Backlog
           </Link>
           <AddTitleLink variant="link" />
           <LogoutButton />
-        </div>
+        </nav>
       </header>
 
       <WhatFitsNow initialTitles={titles ?? []} />

@@ -7,8 +7,8 @@ type AddTitleLinkProps = {
 export function AddTitleLink({ variant = 'fab' }: AddTitleLinkProps) {
   if (variant === 'link') {
     return (
-      <Link href="/add" className="text-sm text-gray-700 underline">
-        Add title
+      <Link href="/add" className="text-xs text-muted transition-colors hover:text-fg">
+        Add
       </Link>
     )
   }
@@ -16,7 +16,7 @@ export function AddTitleLink({ variant = 'fab' }: AddTitleLinkProps) {
   return (
     <Link
       href="/add"
-      className="fixed bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-gray-900 text-2xl text-white shadow-md"
+      className="fixed bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-2xl text-ink shadow-md"
       aria-label="Add title"
     >
       +
