@@ -10,12 +10,6 @@ type AppHeaderProps = {
   email: string
 }
 
-const MENU_LINKS = [
-  { href: '/backlog', label: 'Full backlog' },
-  { href: '/add', label: 'Add title' },
-  { href: '/share-handler', label: 'Screenshot' },
-] as const
-
 export function AppHeader({ email }: AppHeaderProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -73,25 +67,20 @@ export function AppHeader({ email }: AppHeaderProps) {
             role="menu"
             className="absolute right-0 z-40 mt-2 w-56 origin-top-right rounded-xl border border-border bg-surface py-1 shadow-lg"
           >
-            <p className="truncate px-3 py-2 text-xs text-muted">{email}</p>
-            <div className="my-1 border-t border-border" />
-            {MENU_LINKS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className="block px-3 py-2 text-sm text-fg transition-colors duration-150 hover:bg-page hover:text-accent"
-              >
-                {item.label}
-              </Link>
-            ))}
-            <div className="my-1 border-t border-border" />
+            <p className="truncate px-3 py-2.5 text-sm text-fg">{email || 'Signed in'}</p>
+            <Link
+              href="/history"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block px-3 py-2.5 text-sm text-fg transition-colors duration-150 hover:bg-page hover:text-accent"
+            >
+              History
+            </Link>
             <button
               type="button"
               role="menuitem"
               onClick={handleLogout}
-              className="block w-full px-3 py-2 text-left text-sm text-fg transition-colors duration-150 hover:bg-page hover:text-accent"
+              className="block w-full px-3 py-2.5 text-left text-sm text-danger transition-colors duration-150 hover:bg-page"
             >
               Log out
             </button>

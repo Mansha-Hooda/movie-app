@@ -91,7 +91,9 @@ export function TitleCard({ title: initialTitle, onUpdate }: TitleCardProps) {
       >
         {TITLE_STATUSES.map((option) => (
           <option key={option.value} value={option.value}>
-            {option.label}
+            {option.value === 'done' && title.media_type === 'book'
+              ? 'Read'
+              : option.label}
           </option>
         ))}
       </select>
