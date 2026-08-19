@@ -1,21 +1,23 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { MediaTypeTabs, type MediaTypeTab } from '@/components/MediaTypeTabs'
 import { MoodCarousel } from '@/components/MoodCarousel'
 import { TitleGrid } from '@/components/TitleGrid'
 import { UndoWatchedToast } from '@/components/UndoWatchedToast'
 import { WatchedProgress } from '@/components/WatchedProgress'
 import { useBacklogTitles } from '@/hooks/useBacklogTitles'
-import { MOOD_TAGS, TIME_COMMITMENTS, type MoodTag } from '@/lib/titles/constants'
+import { MOOD_TAGS, TIME_COMMITMENTS } from '@/lib/titles/constants'
+import { customMoodsFromTitles, loadCustomMoods, mergeMoodOptions } from '@/lib/titles/moods'
 import { filterTitles, hasActiveFilters } from '@/lib/titles/filter'
 import type { TimeCommitment, Title } from '@/types/database'
 
 type WhatFitsNowProps = {
+  userId: string
   initialTitles: Title[]
 }
 
-export function WhatFitsNow({ initialTitles }: WhatFitsNowProps) {
+export function WhatFitsNow({ userId, initialTitles }: WhatFitsNowProps) {
   const {
     titles,
     handleTitleUpdate,
@@ -24,8 +26,18 @@ export function WhatFitsNow({ initialTitles }: WhatFitsNowProps) {
     dismissUndo,
   } = useBacklogTitles(initialTitles)
   const [mediaType, setMediaType] = useState<MediaTypeTab>('all')
-  const [mood, setMood] = useState<MoodTag>(MOOD_TAGS[0])
+  const [moodOptions, setMoodOptions] = useState<string[]>([...MOOD_TAGS])
+  const [mood, setMood] = useState<string>(MOOD_TAGS[0])
   const [time, setTime] = useState<TimeCommitment | null>(null)
+
+  useEffect(() => {
+    const nextMoods = mergeMoodOptions(
+      loadCustomMoods(userId),
+      customMoodsFromTitles(titles),
+    )
+    setMoodOptions(nextMoods)
+    setMood((current) => (nextMoods.includes(current) ? current : nextMoods[0]))
+  }, [userId, titles])
 
   const moods = useMemo(() => [mood], [mood])
   const filters = useMemo(
@@ -48,7 +60,7 @@ export function WhatFitsNow({ initialTitles }: WhatFitsNowProps) {
 
   return (
     <div>
-      <MoodCarousel value={mood} onChange={setMood} />
+      <MoodCarousel moods={moodOptions} value={mood} onChange={setMood} />
 
       <WatchedProgress watchedCount={moodWatched} totalCount={moodTotal} />
 

@@ -2,22 +2,24 @@
 
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { MOOD_DISPLAY_LABELS, MOOD_TAGS, type MoodTag } from '@/lib/titles/constants'
+import { moodLabel } from '@/lib/titles/moods'
 
 type MoodCarouselProps = {
-  value: MoodTag
-  onChange: (mood: MoodTag) => void
+  moods: string[]
+  value: string
+  onChange: (mood: string) => void
 }
 
-export function MoodCarousel({ value, onChange }: MoodCarouselProps) {
-  const index = MOOD_TAGS.indexOf(value)
+export function MoodCarousel({ moods, value, onChange }: MoodCarouselProps) {
+  const index = Math.max(0, moods.indexOf(value))
   const [slide, setSlide] = useState<'idle' | 'out-left' | 'out-right' | 'in'>('idle')
 
   function cycle(delta: 1 | -1) {
-    const nextIndex = (index + delta + MOOD_TAGS.length) % MOOD_TAGS.length
+    if (moods.length === 0) return
+    const nextIndex = (index + delta + moods.length) % moods.length
     setSlide(delta > 0 ? 'out-left' : 'out-right')
     window.setTimeout(() => {
-      onChange(MOOD_TAGS[nextIndex])
+      onChange(moods[nextIndex])
       setSlide('in')
       window.setTimeout(() => setSlide('idle'), 180)
     }, 140)
@@ -47,7 +49,7 @@ export function MoodCarousel({ value, onChange }: MoodCarouselProps) {
         <h2
           className={`min-w-0 flex-1 text-2xl font-medium tracking-tight text-fg transition-all duration-150 ease-out sm:text-3xl ${motionClass}`}
         >
-          {MOOD_DISPLAY_LABELS[value]}
+          {moodLabel(value)}
         </h2>
         <button
           type="button"
@@ -59,7 +61,7 @@ export function MoodCarousel({ value, onChange }: MoodCarouselProps) {
         </button>
       </div>
       <div className="mt-4 flex items-center justify-center gap-1.5" aria-hidden>
-        {MOOD_TAGS.map((tag, i) => (
+        {moods.map((tag, i) => (
           <span
             key={tag}
             className={`h-1.5 rounded-full transition-all duration-200 ${

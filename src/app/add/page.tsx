@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { AppHeader } from '@/components/AppHeader'
 import { TitleForm } from '@/components/TitleForm'
+import { fetchUserTitles } from '@/lib/titles/api'
 import { createClient } from '@/lib/supabase/server'
 import type { MediaType } from '@/types/database'
 
@@ -31,6 +32,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
   const params = await searchParams
   const initialName = params.name?.trim() || undefined
   const initialMediaType = parseMediaType(params.media_type)
+  const { data: titles } = await fetchUserTitles(supabase, user.id)
 
   return (
     <main className="mx-auto max-w-md px-5 pb-12 pt-6">
@@ -40,6 +42,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
         userId={user.id}
         initialName={initialName}
         initialMediaType={initialMediaType}
+        existingTitles={titles ?? []}
         autoEnrich={Boolean(initialName)}
       />
     </main>

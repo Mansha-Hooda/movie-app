@@ -31,7 +31,7 @@ export default async function HomePage() {
   return (
     <main className="mx-auto max-w-lg px-5 pb-24 pt-6">
       <AppHeader email={user.email ?? ''} />
-      <WhatFitsNow initialTitles={titles ?? []} />
+      <WhatFitsNow userId={user.id} initialTitles={titles ?? []} />
       <AddTitleLink />
     </main>
   )

@@ -4,21 +4,27 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'r
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createTitle } from '@/lib/titles/api'
-import {
-  MEDIA_TYPES,
-  MOOD_DISPLAY_LABELS,
-  MOOD_TAGS,
-  TIME_COMMITMENTS,
-  type MoodTag,
-} from '@/lib/titles/constants'
+import { MEDIA_TYPES, TIME_COMMITMENTS } from '@/lib/titles/constants'
 import { moodsFromGenre } from '@/lib/genre-mood-map'
+import {
+  addCustomMood,
+  customMoodsFromTitles,
+  loadCustomMoods,
+  matchBuiltInMood,
+  mergeMoodOptions,
+  moodLabel,
+  saveCustomMoods,
+  uniqueMoods,
+} from '@/lib/titles/moods'
 import type { EnrichmentData, SearchResult } from '@/lib/enrichment/types'
-import type { MediaType, TimeCommitment } from '@/types/database'
+import type { MediaType, TimeCommitment, Title } from '@/types/database'
 
 type TitleFormProps = {
   userId: string
   initialName?: string
   initialMediaType?: MediaType
+  /** Existing titles, used to surface previously saved custom moods. */
+  existingTitles?: Title[]
   /** When true with initialName, auto-pick the best search hit and enrich. */
   autoEnrich?: boolean
 }
@@ -47,13 +53,16 @@ export function TitleForm({
   userId,
   initialName = '',
   initialMediaType = 'movie',
+  existingTitles = [],
   autoEnrich = false,
 }: TitleFormProps) {
   const router = useRouter()
   const [name, setName] = useState(initialName)
   const [mediaType, setMediaType] = useState<MediaType>(initialMediaType)
   const [suggestedBy, setSuggestedBy] = useState('')
-  const [moodTags, setMoodTags] = useState<MoodTag[]>([])
+  const [moodTags, setMoodTags] = useState<string[]>([])
+  const [customMoods, setCustomMoods] = useState<string[]>([])
+  const [customMoodInput, setCustomMoodInput] = useState('')
   const [timeCommitment, setTimeCommitment] = useState<TimeCommitment>('medium')
   const [enrichment, setEnrichment] = useState<EnrichmentFields>(EMPTY_ENRICHMENT)
   const [results, setResults] = useState<SearchResult[]>([])
@@ -67,6 +76,12 @@ export function TitleForm({
   const blurTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const autoEnrichPending = useRef(autoEnrich && initialName.trim().length >= 2)
   const skipNextMediaTypeClear = useRef(true)
+
+  useEffect(() => {
+    setCustomMoods(
+      uniqueMoods([...loadCustomMoods(userId), ...customMoodsFromTitles(existingTitles)]),
+    )
+  }, [userId, existingTitles])
 
   useEffect(() => {
     const trimmed = name.trim()
@@ -134,10 +149,33 @@ export function TitleForm({
     setMoodTags([])
   }, [mediaType])
 
-  function toggleMoodTag(tag: MoodTag) {
+  const moodOptions = mergeMoodOptions(customMoods)
+
+  function toggleMoodTag(tag: string) {
     setMoodTags((current) =>
       current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag],
     )
+  }
+
+  function handleAddCustomMood() {
+    const builtIn = matchBuiltInMood(customMoodInput)
+    if (builtIn) {
+      setMoodTags((current) =>
+        current.includes(builtIn) ? current : [...current, builtIn],
+      )
+      setCustomMoodInput('')
+      return
+    }
+
+    const trimmed = customMoodInput.trim().replace(/\s+/g, ' ')
+    if (!trimmed) return
+
+    const nextCustom = addCustomMood(userId, trimmed)
+    const stored =
+      nextCustom.find((mood) => mood.toLowerCase() === trimmed.toLowerCase()) ?? trimmed
+    setCustomMoods(nextCustom)
+    setMoodTags((current) => (current.includes(stored) ? current : [...current, stored]))
+    setCustomMoodInput('')
   }
 
   function clearEnrichmentOnManualEdit(nextName: string) {
@@ -221,6 +259,8 @@ export function TitleForm({
       setError(createError.message)
       return
     }
+
+    saveCustomMoods(userId, [...loadCustomMoods(userId), ...moodTags])
 
     router.push('/')
     router.refresh()
@@ -365,9 +405,9 @@ export function TitleForm({
       </div>
 
       <div>
-        <span className="mb-2 block text-sm text-muted">Mood tags</span>
+        <span className="mb-2 block text-sm text-muted">Moods</span>
         <div className="flex flex-wrap gap-2">
-          {MOOD_TAGS.map((tag) => {
+          {moodOptions.map((tag) => {
             const selected = moodTags.includes(tag)
             return (
               <button
@@ -376,10 +416,34 @@ export function TitleForm({
                 onClick={() => toggleMoodTag(tag)}
                 className={`chip ${selected ? 'chip-on' : 'chip-off'}`}
               >
-                {MOOD_DISPLAY_LABELS[tag]}
+                {moodLabel(tag)}
               </button>
             )
           })}
+        </div>
+        <div className="mt-3 flex gap-2">
+          <input
+            id="custom_mood"
+            type="text"
+            value={customMoodInput}
+            onChange={(event) => setCustomMoodInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                handleAddCustomMood()
+              }
+            }}
+            placeholder="Add your own mood"
+            className="field"
+          />
+          <button
+            type="button"
+            onClick={handleAddCustomMood}
+            disabled={!customMoodInput.trim()}
+            className="btn-secondary shrink-0 px-3"
+          >
+            Add
+          </button>
         </div>
       </div>
 

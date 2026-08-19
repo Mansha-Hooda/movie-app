@@ -5,18 +5,13 @@ import { MOOD_TAGS, type MoodTag } from '@/lib/titles/constants'
  * A title with multiple genres can suggest multiple moods.
  */
 const GENRE_MOOD_RULES: { keywords: string[]; mood: MoodTag }[] = [
-  { keywords: ['comedy', 'comic', 'humor', 'humour', 'sitcom'], mood: 'funny' },
   {
-    keywords: ['horror', 'thriller', 'suspense', 'crime', 'war', 'documentary'],
-    mood: 'high-focus',
+    keywords: ['animation', 'animated', 'family', 'kids', 'children'],
+    mood: 'cozy',
   },
   {
     keywords: ['drama', 'romance', 'romantic', 'tragedy', 'melodrama'],
     mood: 'sad',
-  },
-  {
-    keywords: ['animation', 'animated', 'family', 'kids', 'children'],
-    mood: 'cozy',
   },
   {
     keywords: [
@@ -26,12 +21,24 @@ const GENRE_MOOD_RULES: { keywords: string[]; mood: MoodTag }[] = [
       'mystery',
       'fantasy',
       'psychological',
+      'thriller',
     ],
-    mood: 'mind-bending',
+    mood: 'mindfuck',
   },
   {
-    keywords: ['reality', 'talk', 'variety', 'game-show', 'game show', 'news'],
-    mood: 'background-noise',
+    keywords: [
+      'comedy',
+      'comic',
+      'humor',
+      'humour',
+      'sitcom',
+      'reality',
+      'talk',
+      'variety',
+      'game-show',
+      'game show',
+    ],
+    mood: 'brainrot',
   },
 ]
 
@@ -55,6 +62,5 @@ export function moodsFromGenre(genre: string | null | undefined): MoodTag[] {
     }
   }
 
-  // Preserve MOOD_TAGS display order
   return MOOD_TAGS.filter((tag) => suggested.has(tag))
 }
