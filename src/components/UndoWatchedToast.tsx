@@ -23,7 +23,7 @@ export function UndoWatchedToast({ undo, onUndo, onDismiss }: UndoWatchedToastPr
         <button
           type="button"
           onClick={onUndo}
-          className="rounded-full bg-accent px-3 py-1 text-sm text-ink"
+          className="rounded-full bg-accent px-3 py-1 text-sm text-ink transition duration-150 hover:brightness-110 active:scale-95"
         >
           Undo
         </button>

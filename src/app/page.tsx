@@ -33,10 +33,10 @@ export default async function HomePage() {
       <header className="mb-6 flex items-center justify-between gap-3">
         <p className="truncate text-xs text-muted">{user.email}</p>
         <nav className="flex shrink-0 items-center gap-3 text-xs text-muted">
-          <Link href="/share-handler" className="transition-colors hover:text-fg">
+          <Link href="/share-handler" className="transition-colors hover:text-accent">
             Screenshot
           </Link>
-          <Link href="/backlog" className="transition-colors hover:text-fg">
+          <Link href="/backlog" className="transition-colors hover:text-accent">
             Backlog
           </Link>
           <AddTitleLink variant="link" />

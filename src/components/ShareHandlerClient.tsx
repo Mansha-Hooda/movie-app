@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 import type { IdentifyResult } from '@/lib/identify/types'
 import { compressImageForUpload } from '@/lib/images/compress'
 import type { MediaType } from '@/types/database'
@@ -224,7 +225,7 @@ export function ShareHandlerClient() {
         <img
           src={previewUrl}
           alt="Screenshot being identified"
-          className="mx-auto max-h-64 rounded-md border border-border object-contain"
+          className="mx-auto max-h-64 rounded-xl border border-border bg-surface object-contain"
         />
       )}
 
@@ -237,7 +238,7 @@ export function ShareHandlerClient() {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="rounded-full bg-accent px-4 py-2 text-sm text-ink"
+            className="btn-primary"
           >
             Upload screenshot
           </button>
@@ -245,9 +246,10 @@ export function ShareHandlerClient() {
       )}
 
       {phase === 'loading' && (
-        <p className="text-center text-sm text-muted">
-          Preparing image and identifying title…
-        </p>
+        <div className="flex flex-col items-center gap-3 py-4">
+          <Loader2 className="h-7 w-7 animate-spin text-accent" aria-hidden />
+          <p className="text-center text-sm text-muted">Identifying title…</p>
+        </div>
       )}
 
       {phase === 'confirm' && guess && (
@@ -266,13 +268,13 @@ export function ShareHandlerClient() {
             <button
               type="button"
               onClick={handleConfirm}
-              className="rounded-full bg-accent px-4 py-2 text-sm text-ink"
+              className="btn-primary"
             >
               Yes, that&apos;s it
             </button>
             <Link
               href="/add"
-              className="rounded-full border border-border px-4 py-2 text-center text-sm text-muted"
+              className="btn-secondary"
             >
               Not quite, let me search
             </Link>
@@ -288,13 +290,13 @@ export function ShareHandlerClient() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="rounded-full border border-border px-4 py-2 text-sm text-muted"
+              className="btn-secondary"
             >
               Try another image
             </button>
             <Link
               href="/add"
-              className="rounded-full bg-accent px-4 py-2 text-center text-sm text-ink"
+              className="btn-primary"
             >
               Search manually
             </Link>
@@ -312,7 +314,7 @@ export function ShareHandlerClient() {
             setErrorKind(null)
             setPhase('idle')
           }}
-          className="text-sm text-muted underline"
+          className="text-sm text-accent transition-colors hover:brightness-110"
         >
           Start over
         </button>

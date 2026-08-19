@@ -36,7 +36,7 @@ export function LoginForm() {
 
   if (step === 'sent') {
     return (
-      <div className="rounded-xl border border-border bg-surface p-6 text-center">
+      <div className="text-center">
         <p className="mb-2 font-medium text-fg">Check your email</p>
         <p className="text-sm text-muted">
           We sent a sign-in link to <span className="font-medium text-fg">{email}</span>.
@@ -44,7 +44,7 @@ export function LoginForm() {
         <button
           type="button"
           onClick={() => setStep('email')}
-          className="mt-4 text-sm text-muted underline"
+          className="mt-4 text-sm text-accent transition-colors hover:brightness-110"
         >
           Use a different email
         </button>
@@ -66,21 +66,17 @@ export function LoginForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@example.com"
-          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-fg placeholder:text-muted"
+          className="field"
         />
       </div>
 
       {error && (
-        <p className="text-sm text-accent" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {error}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-full rounded-full bg-accent px-4 py-2 text-ink disabled:opacity-60"
-      >
+      <button type="submit" disabled={submitting} className="btn-primary w-full">
         {submitting ? 'Sending…' : 'Send magic link'}
       </button>
     </form>

@@ -87,7 +87,7 @@ export function TitleCard({ title: initialTitle, onUpdate }: TitleCardProps) {
         value={title.status}
         disabled={updating}
         onChange={(event) => handleStatusChange(event.target.value as TitleStatus)}
-        className="mt-2 w-full rounded-lg border border-border bg-surface px-2 py-1 text-xs text-muted disabled:opacity-60"
+        className="mt-2 w-full rounded-lg border border-border bg-surface px-2 py-1 text-xs text-muted outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/35 disabled:opacity-60"
       >
         {TITLE_STATUSES.map((option) => (
           <option key={option.value} value={option.value}>
@@ -97,7 +97,7 @@ export function TitleCard({ title: initialTitle, onUpdate }: TitleCardProps) {
       </select>
 
       {error && (
-        <p className="mt-1 text-xs text-accent" role="alert">
+        <p className="mt-1 text-xs text-danger" role="alert">
           {error}
         </p>
       )}

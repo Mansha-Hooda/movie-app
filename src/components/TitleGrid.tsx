@@ -28,7 +28,7 @@ export function TitleGrid({
         {emptyAction && (
           <Link
             href={emptyAction.href}
-            className="inline-block rounded-full bg-accent px-4 py-2 text-sm text-ink"
+            className="inline-block rounded-full bg-accent px-4 py-2 text-sm text-ink transition duration-150 hover:brightness-110 active:scale-95"
           >
             {emptyAction.label}
           </Link>

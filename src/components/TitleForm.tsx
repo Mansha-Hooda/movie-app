@@ -235,21 +235,22 @@ export function TitleForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="media_type" className="mb-1 block text-sm text-muted">
-          Type
-        </label>
-        <select
-          id="media_type"
-          value={mediaType}
-          onChange={(event) => setMediaType(event.target.value as MediaType)}
-          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-fg"
-        >
-          {MEDIA_TYPES.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <span className="mb-2 block text-sm text-muted">Type</span>
+        <div className="flex flex-wrap gap-2">
+          {MEDIA_TYPES.map((option) => {
+            const selected = mediaType === option.value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setMediaType(option.value)}
+                className={`chip ${selected ? 'chip-on' : 'chip-off'}`}
+              >
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <div className="relative">
@@ -269,7 +270,7 @@ export function TitleForm({
           onBlur={() => {
             blurTimeout.current = setTimeout(() => setDropdownOpen(false), 150)
           }}
-          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-fg"
+          className="field"
         />
         {searching && (
           <p className="mt-1 text-xs text-muted">Searching…</p>
@@ -291,7 +292,7 @@ export function TitleForm({
                     if (blurTimeout.current) clearTimeout(blurTimeout.current)
                     void handleSelectResult(result)
                   }}
-                  className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-page"
+                  className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors duration-150 hover:bg-page"
                 >
                   {result.poster_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -359,7 +360,7 @@ export function TitleForm({
           onChange={(event: ChangeEvent<HTMLInputElement>) =>
             setSuggestedBy(event.target.value)
           }
-          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-fg"
+          className="field"
         />
       </div>
 
@@ -373,11 +374,7 @@ export function TitleForm({
                 key={tag}
                 type="button"
                 onClick={() => toggleMoodTag(tag)}
-                className={`rounded-full border px-3 py-1 text-sm transition-colors duration-200 ${
-                  selected
-                    ? 'border-accent bg-accent text-ink'
-                    : 'border-border text-muted'
-                }`}
+                className={`chip ${selected ? 'chip-on' : 'chip-off'}`}
               >
                 {MOOD_DISPLAY_LABELS[tag]}
               </button>
@@ -387,34 +384,31 @@ export function TitleForm({
       </div>
 
       <div>
-        <label htmlFor="time_commitment" className="mb-1 block text-sm text-muted">
-          Time commitment
-        </label>
-        <select
-          id="time_commitment"
-          value={timeCommitment}
-          onChange={(event) => setTimeCommitment(event.target.value as TimeCommitment)}
-          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-fg"
-        >
-          {TIME_COMMITMENTS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <span className="mb-2 block text-sm text-muted">Time commitment</span>
+        <div className="flex flex-wrap gap-2">
+          {TIME_COMMITMENTS.map((option) => {
+            const selected = timeCommitment === option.value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setTimeCommitment(option.value)}
+                className={`chip ${selected ? 'chip-on' : 'chip-off'}`}
+              >
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {error && (
-        <p className="text-sm text-accent" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {error}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-full rounded-full bg-accent px-4 py-2 text-ink disabled:opacity-60"
-      >
+      <button type="submit" disabled={submitting} className="btn-primary w-full">
         {submitting ? 'Adding…' : 'Add title'}
       </button>
     </form>

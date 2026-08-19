@@ -39,7 +39,7 @@ export function MoodCarousel({ value, onChange }: MoodCarouselProps) {
         <button
           type="button"
           onClick={() => cycle(-1)}
-          className="rounded-full p-2 text-muted transition-colors hover:text-fg"
+          className="rounded-full p-2 text-muted transition-colors hover:text-fg active:scale-95"
           aria-label="Previous mood"
         >
           <ChevronLeft className="h-6 w-6" />
@@ -52,7 +52,7 @@ export function MoodCarousel({ value, onChange }: MoodCarouselProps) {
         <button
           type="button"
           onClick={() => cycle(1)}
-          className="rounded-full p-2 text-muted transition-colors hover:text-fg"
+          className="rounded-full p-2 text-muted transition-colors hover:text-fg active:scale-95"
           aria-label="Next mood"
         >
           <ChevronRight className="h-6 w-6" />

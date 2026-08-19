@@ -28,11 +28,7 @@ export function MediaTypeTabs({ value, onChange }: MediaTypeTabsProps) {
             role="tab"
             aria-selected={selected}
             onClick={() => onChange(tab.value)}
-            className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors duration-200 ${
-              selected
-                ? 'border-accent bg-accent text-ink'
-                : 'border-border bg-transparent text-muted'
-            }`}
+            className={`chip ${selected ? 'chip-on' : 'chip-off'}`}
           >
             {tab.label}
           </button>

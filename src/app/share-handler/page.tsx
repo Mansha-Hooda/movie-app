@@ -17,7 +17,7 @@ export default async function ShareHandlerPage() {
     <main className="mx-auto max-w-md px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-medium text-fg">From screenshot</h1>
-        <Link href="/" className="text-sm text-muted transition-colors hover:text-fg">
+        <Link href="/" className="text-sm text-accent transition-colors hover:brightness-110">
           Home
         </Link>
       </div>

@@ -36,7 +36,7 @@ export default async function BacklogPage() {
           <p className="text-xs text-muted">{user.email}</p>
         </div>
         <nav className="flex shrink-0 items-center gap-3 text-xs text-muted">
-          <Link href="/" className="transition-colors hover:text-fg">
+          <Link href="/" className="transition-colors hover:text-accent">
             Home
           </Link>
           <AddTitleLink variant="link" />

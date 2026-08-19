@@ -59,11 +59,7 @@ export function WhatFitsNow({ initialTitles }: WhatFitsNowProps) {
               key={option.value}
               type="button"
               onClick={() => setTime((current) => (current === option.value ? null : option.value))}
-              className={`rounded-full border px-3 py-1 text-xs transition-colors duration-200 ${
-                selected
-                  ? 'border-accent bg-accent text-ink'
-                  : 'border-border text-muted'
-              }`}
+              className={`chip text-xs ${selected ? 'chip-on' : 'chip-off'}`}
             >
               {option.label}
             </button>
