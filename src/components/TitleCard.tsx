@@ -82,7 +82,8 @@ export function TitleCard({ title: initialTitle, onUpdate, onDelete }: TitleCard
     MEDIA_TYPES.find((option) => option.value === title.media_type)?.label ??
     title.media_type ??
     '—'
-  const doneLabel = title.media_type === 'book' ? 'Read' : 'Watched'
+  const doneLabel =
+    title.media_type === 'book' ? 'Mark as Read' : 'Mark as Watched'
 
   return (
     <article className="flex h-full flex-col">
@@ -107,67 +108,6 @@ export function TitleCard({ title: initialTitle, onUpdate, onDelete }: TitleCard
         <span className="absolute top-2 right-2 rounded-full bg-page/55 p-1.5 backdrop-blur-[2px]">
           <TypeIcon type={title.media_type} />
         </span>
-
-        <div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t from-page/85 via-page/40 to-transparent p-2 pt-8">
-          <button
-            type="button"
-            disabled={updating}
-            onClick={handleMarkDone}
-            className="flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-full bg-accent/90 px-3 py-1.5 text-xs font-medium text-ink backdrop-blur-[2px] transition duration-150 hover:brightness-110 active:scale-95 disabled:opacity-60"
-          >
-            <Check className="h-3.5 w-3.5" strokeWidth={2.25} />
-            {doneLabel}
-          </button>
-
-          <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              aria-label="More actions"
-              aria-expanded={menuOpen}
-              onClick={() => {
-                setMenuOpen((open) => !open)
-                setConfirmDelete(false)
-              }}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-page/55 text-fg backdrop-blur-[2px] transition duration-150 hover:bg-page/75 active:scale-95"
-            >
-              <MoreVertical className="h-4 w-4" strokeWidth={1.75} />
-            </button>
-
-            {menuOpen && (
-              <div className="absolute right-0 bottom-11 z-20 min-w-[9.5rem] overflow-hidden rounded-lg border border-border bg-surface py-1 shadow-lg">
-                {confirmDelete ? (
-                  <div className="px-3 py-2">
-                    <p className="mb-2 text-xs text-muted">Delete this title?</p>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={handleDeleteClick}
-                        className="text-xs text-danger transition-colors hover:brightness-110"
-                      >
-                        Delete
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmDelete(false)}
-                        className="text-xs text-muted transition-colors hover:text-fg"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleDeleteClick}
-                    className="block w-full px-3 py-2 text-left text-sm text-danger transition-colors hover:bg-page"
-                  >
-                    Delete
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       <h2 className="h-[2.6em] text-[0.95rem] font-medium leading-snug text-fg line-clamp-2">
@@ -176,6 +116,67 @@ export function TitleCard({ title: initialTitle, onUpdate, onDelete }: TitleCard
       <p className="mt-0.5 text-sm text-muted">
         {watchLaterLabel} · {typeLabel}
       </p>
+
+      <div className="mt-2.5 flex items-center gap-1.5">
+        <button
+          type="button"
+          disabled={updating}
+          onClick={handleMarkDone}
+          className="flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-full bg-accent px-2.5 py-1.5 text-xs font-medium text-ink transition duration-150 hover:brightness-110 active:scale-95 disabled:opacity-60"
+        >
+          <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
+          {doneLabel}
+        </button>
+
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            aria-label="More actions"
+            aria-expanded={menuOpen}
+            onClick={() => {
+              setMenuOpen((open) => !open)
+              setConfirmDelete(false)
+            }}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-muted transition duration-150 hover:text-fg active:scale-95"
+          >
+            <MoreVertical className="h-4 w-4" strokeWidth={1.75} />
+          </button>
+
+          {menuOpen && (
+            <div className="absolute right-0 bottom-11 z-20 min-w-[9.5rem] overflow-hidden rounded-lg border border-border bg-surface py-1 shadow-lg">
+              {confirmDelete ? (
+                <div className="px-3 py-2">
+                  <p className="mb-2 text-xs text-muted">Delete this title?</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDeleteClick}
+                      className="text-xs text-danger transition-colors hover:brightness-110"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(false)}
+                      className="text-xs text-muted transition-colors hover:text-fg"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleDeleteClick}
+                  className="block w-full px-3 py-2 text-left text-sm text-danger transition-colors hover:bg-page"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </article>
   )
 }
