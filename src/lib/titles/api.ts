@@ -36,6 +36,46 @@ export async function fetchUserTitles(
   return { data, error: null }
 }
 
+export function normalizeTitleName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
+export function findDuplicateInList(
+  titles: Title[],
+  name: string,
+  mediaType: MediaType,
+): Title | null {
+  const normalized = normalizeTitleName(name)
+  if (!normalized) return null
+
+  return (
+    titles.find(
+      (title) =>
+        title.media_type === mediaType &&
+        normalizeTitleName(title.name) === normalized,
+    ) ?? null
+  )
+}
+
+export async function findDuplicateTitle(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  name: string,
+  mediaType: MediaType,
+): Promise<{ data: Title | null; error: Error | null }> {
+  const { data, error } = await supabase
+    .from('titles')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('media_type', mediaType)
+
+  if (error) {
+    return { data: null, error: new Error(error.message) }
+  }
+
+  return { data: findDuplicateInList(data ?? [], name, mediaType), error: null }
+}
+
 export async function createTitle(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -71,6 +111,47 @@ export async function updateTitleStatus(
     .from('titles')
     .update({ status })
     .eq('id', titleId)
+
+  if (error) {
+    return { error: new Error(error.message) }
+  }
+
+  return { error: null }
+}
+
+export async function deleteTitle(
+  supabase: SupabaseClient<Database>,
+  titleId: string,
+): Promise<{ error: Error | null }> {
+  const { error } = await supabase.from('titles').delete().eq('id', titleId)
+
+  if (error) {
+    return { error: new Error(error.message) }
+  }
+
+  return { error: null }
+}
+
+export async function restoreTitle(
+  supabase: SupabaseClient<Database>,
+  title: Title,
+): Promise<{ error: Error | null }> {
+  const { error } = await supabase.from('titles').insert({
+    id: title.id,
+    user_id: title.user_id,
+    name: title.name,
+    media_type: title.media_type,
+    suggested_by: title.suggested_by,
+    mood_tags: title.mood_tags,
+    time_commitment: title.time_commitment,
+    status: title.status,
+    rating: title.rating,
+    poster_url: title.poster_url,
+    genre: title.genre,
+    runtime_or_pages: title.runtime_or_pages,
+    synopsis: title.synopsis,
+    date_added: title.date_added,
+  })
 
   if (error) {
     return { error: new Error(error.message) }

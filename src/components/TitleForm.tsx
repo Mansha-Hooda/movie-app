@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { createTitle } from '@/lib/titles/api'
+import { createTitle, findDuplicateInList, findDuplicateTitle } from '@/lib/titles/api'
 import { MEDIA_TYPES, WATCH_LATER_OPTIONS } from '@/lib/titles/constants'
 import { moodsFromGenre } from '@/lib/genre-mood-map'
 import {
@@ -70,6 +71,7 @@ export function TitleForm({
   const [selecting, setSelecting] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [duplicate, setDuplicate] = useState<Title | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const searchSeq = useRef(0)
@@ -82,6 +84,10 @@ export function TitleForm({
       uniqueMoods([...loadCustomMoods(userId), ...customMoodsFromTitles(existingTitles)]),
     )
   }, [userId, existingTitles])
+
+  useEffect(() => {
+    setDuplicate(findDuplicateInList(existingTitles, name, mediaType))
+  }, [existingTitles, name, mediaType])
 
   useEffect(() => {
     const trimmed = name.trim()
@@ -245,6 +251,25 @@ export function TitleForm({
     setMoodTags(tags)
 
     const supabase = createClient()
+    const { data: existing, error: duplicateError } = await findDuplicateTitle(
+      supabase,
+      userId,
+      name,
+      mediaType,
+    )
+
+    if (duplicateError) {
+      setSubmitting(false)
+      setError(duplicateError.message)
+      return
+    }
+
+    if (existing) {
+      setDuplicate(existing)
+      setSubmitting(false)
+      return
+    }
+
     const { error: createError } = await createTitle(supabase, userId, {
       name,
       media_type: mediaType,
@@ -462,14 +487,33 @@ export function TitleForm({
         </div>
       </div>
 
+      {duplicate && (
+        <div className="rounded-lg border border-border bg-surface px-3 py-2 text-sm" role="status">
+          <p className="text-fg">Already in your backlog</p>
+          <p className="mt-0.5 text-xs text-muted">
+            {duplicate.status === 'done'
+              ? duplicate.media_type === 'book'
+                ? 'You already marked this as read.'
+                : 'You already marked this as watched.'
+              : `${duplicate.name} is already saved as a ${duplicate.media_type}.`}
+          </p>
+          <Link
+            href="/backlog"
+            className="mt-2 inline-block text-sm text-accent transition-colors hover:brightness-110"
+          >
+            View in backlog
+          </Link>
+        </div>
+      )}
+
       {error && (
         <p className="text-sm text-danger" role="alert">
           {error}
         </p>
       )}
 
-      <button type="submit" disabled={submitting} className="btn-primary w-full">
-        {submitting ? 'Adding…' : 'Add title'}
+      <button type="submit" disabled={submitting || Boolean(duplicate)} className="btn-primary w-full">
+        {submitting ? 'Adding…' : duplicate ? 'Already in your backlog' : 'Add title'}
       </button>
     </form>
   )

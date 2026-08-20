@@ -18,8 +18,9 @@ export function BacklogGrid({ titles: initialTitles }: BacklogGridProps) {
   const {
     titles,
     handleTitleUpdate,
+    handleTitleDelete,
     undo,
-    undoWatched,
+    undoAction,
     dismissUndo,
     watchedCount,
     totalCount,
@@ -53,9 +54,10 @@ export function BacklogGrid({ titles: initialTitles }: BacklogGridProps) {
             : { href: '/add', label: 'Add a title' }
         }
         onTitleUpdate={handleTitleUpdate}
+        onTitleDelete={handleTitleDelete}
       />
 
-      <UndoWatchedToast undo={undo} onUndo={undoWatched} onDismiss={dismissUndo} />
+      <UndoWatchedToast undo={undo} onUndo={undoAction} onDismiss={dismissUndo} />
     </div>
   )
 }

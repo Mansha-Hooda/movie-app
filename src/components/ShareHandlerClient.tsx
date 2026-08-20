@@ -6,13 +6,18 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import type { IdentifyResult } from '@/lib/identify/types'
 import { compressImageForUpload } from '@/lib/images/compress'
-import type { MediaType } from '@/types/database'
+import { findDuplicateInList } from '@/lib/titles/api'
+import type { MediaType, Title } from '@/types/database'
 
 const SHARE_CACHE = 'share-target-v1'
 const SHARE_IMAGE_KEY = 'shared-image'
 const MIN_CONFIDENCE = 0.45
 
 type Phase = 'idle' | 'loading' | 'confirm' | 'fallback'
+
+type ShareHandlerClientProps = {
+  existingTitles?: Title[]
+}
 
 async function readSharedImageFromCache(): Promise<File | null> {
   if (!('caches' in window)) return null
@@ -45,7 +50,7 @@ function isTooLargeError(status: number, message: string | undefined): boolean {
   return /too large|payload|entity too large|body.*limit|413/i.test(message)
 }
 
-export function ShareHandlerClient() {
+export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [phase, setPhase] = useState<Phase>('idle')
@@ -181,8 +186,13 @@ export function ShareHandlerClient() {
     event.target.value = ''
   }
 
+  const duplicate =
+    guess?.name && guess.media_type
+      ? findDuplicateInList(existingTitles, guess.name, guess.media_type)
+      : null
+
   function handleConfirm() {
-    if (!guess?.name || !guess.media_type) return
+    if (!guess?.name || !guess.media_type || duplicate) return
     const params = new URLSearchParams({
       name: guess.name,
       media_type: guess.media_type,
@@ -264,13 +274,32 @@ export function ShareHandlerClient() {
           <p className="mb-4 text-xs text-muted">
             Confidence: {Math.round(guess.confidence * 100)}%
           </p>
+          {duplicate ? (
+            <div className="mb-4 rounded-lg border border-border bg-page px-3 py-2 text-sm">
+              <p className="text-fg">Already in your backlog</p>
+              <p className="mt-0.5 text-xs text-muted">
+                {duplicate.status === 'done'
+                  ? duplicate.media_type === 'book'
+                    ? 'You already marked this as read.'
+                    : 'You already marked this as watched.'
+                  : 'No need to add it again.'}
+              </p>
+              <Link
+                href="/backlog"
+                className="mt-2 inline-block text-sm text-accent transition-colors hover:brightness-110"
+              >
+                View in backlog
+              </Link>
+            </div>
+          ) : null}
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
               onClick={handleConfirm}
-              className="btn-primary"
+              disabled={Boolean(duplicate)}
+              className="btn-primary disabled:opacity-60"
             >
-              Yes, that&apos;s it
+              {duplicate ? 'Already in your backlog' : "Yes, that's it"}
             </button>
             <Link
               href="/add"

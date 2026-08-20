@@ -8,6 +8,7 @@ type TitleGridProps = {
   /** Pass null to hide the empty-state action button. */
   emptyAction?: { href: string; label: string } | null
   onTitleUpdate?: (title: Title) => void
+  onTitleDelete?: (title: Title) => void
 }
 
 const DEFAULT_EMPTY_ACTION = {
@@ -20,6 +21,7 @@ export function TitleGrid({
   emptyMessage = 'Your backlog is empty — add something to watch or read.',
   emptyAction = DEFAULT_EMPTY_ACTION,
   onTitleUpdate,
+  onTitleDelete,
 }: TitleGridProps) {
   if (titles.length === 0) {
     return (
@@ -40,7 +42,12 @@ export function TitleGrid({
   return (
     <div className="grid grid-cols-2 gap-x-3 gap-y-6">
       {titles.map((title) => (
-        <TitleCard key={title.id} title={title} onUpdate={onTitleUpdate} />
+        <TitleCard
+          key={title.id}
+          title={title}
+          onUpdate={onTitleUpdate}
+          onDelete={onTitleDelete}
+        />
       ))}
     </div>
   )

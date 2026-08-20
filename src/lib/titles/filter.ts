@@ -45,6 +45,8 @@ export function uniqueTitlesByName(titles: Title[]): Title[] {
 
   return unique
 }
+
+export function sortByWatchLater(titles: Title[]): Title[] {
   return [...titles].sort((a, b) => {
     const orderA = WATCH_LATER_ORDER[a.time_commitment] ?? 3
     const orderB = WATCH_LATER_ORDER[b.time_commitment] ?? 3

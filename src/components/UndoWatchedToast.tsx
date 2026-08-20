@@ -1,24 +1,31 @@
 'use client'
 
-import type { UndoWatched } from '@/hooks/useBacklogTitles'
+import type { UndoAction } from '@/hooks/useBacklogTitles'
 
-type UndoWatchedToastProps = {
-  undo: UndoWatched | null
+type UndoToastProps = {
+  undo: UndoAction | null
   onUndo: () => void
   onDismiss: () => void
 }
 
-export function UndoWatchedToast({ undo, onUndo, onDismiss }: UndoWatchedToastProps) {
+export function UndoWatchedToast({ undo, onUndo, onDismiss }: UndoToastProps) {
   if (!undo) {
     return null
   }
+
+  const message =
+    undo.kind === 'delete'
+      ? 'Deleted. Undo?'
+      : undo.mediaType === 'book'
+        ? 'Marked as read. Undo?'
+        : 'Marked as watched. Undo?'
 
   return (
     <div
       className="fixed bottom-6 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-lg"
       role="status"
     >
-      <p className="text-sm text-fg">Marked as watched. Undo?</p>
+      <p className="text-sm text-fg">{message}</p>
       <div className="flex shrink-0 items-center gap-2">
         <button
           type="button"

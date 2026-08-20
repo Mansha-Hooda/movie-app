@@ -21,8 +21,9 @@ export function WhatFitsNow({ userId, initialTitles }: WhatFitsNowProps) {
   const {
     titles,
     handleTitleUpdate,
+    handleTitleDelete,
     undo,
-    undoWatched,
+    undoAction,
     dismissUndo,
   } = useBacklogTitles(initialTitles)
   const [mediaType, setMediaType] = useState<MediaTypeTab>('all')
@@ -84,9 +85,10 @@ export function WhatFitsNow({ userId, initialTitles }: WhatFitsNowProps) {
             : { href: '/add', label: 'Add your first title' }
         }
         onTitleUpdate={handleTitleUpdate}
+        onTitleDelete={handleTitleDelete}
       />
 
-      <UndoWatchedToast undo={undo} onUndo={undoWatched} onDismiss={dismissUndo} />
+      <UndoWatchedToast undo={undo} onUndo={undoAction} onDismiss={dismissUndo} />
     </div>
   )
 }
