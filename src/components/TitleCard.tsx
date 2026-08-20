@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { BookOpen, Check, Clapperboard, MoreVertical, Tv } from 'lucide-react'
+import { BookOpen, Clapperboard, MoreVertical, Tv } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { updateTitleStatus } from '@/lib/titles/api'
 import { MEDIA_TYPES, WATCH_LATER_OPTIONS } from '@/lib/titles/constants'
@@ -122,9 +122,8 @@ export function TitleCard({ title: initialTitle, onUpdate, onDelete }: TitleCard
           type="button"
           disabled={updating}
           onClick={handleMarkDone}
-          className="flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-full bg-accent px-2.5 py-1.5 text-xs font-medium text-ink transition duration-150 hover:brightness-110 active:scale-95 disabled:opacity-60"
+          className="flex min-h-9 flex-1 items-center justify-center rounded-lg bg-white px-2.5 py-1.5 text-xs font-medium text-ink transition duration-150 hover:brightness-95 active:scale-95 disabled:opacity-60"
         >
-          <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
           {doneLabel}
         </button>
 
