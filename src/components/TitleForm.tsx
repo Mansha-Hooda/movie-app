@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { createTitle, findDuplicateInList, findDuplicateTitle } from '@/lib/titles/api'
 import { MEDIA_TYPES, WATCH_LATER_OPTIONS } from '@/lib/titles/constants'
@@ -42,6 +43,12 @@ const EMPTY_ENRICHMENT: EnrichmentFields = {
   genre: null,
   runtime_or_pages: null,
   synopsis: null,
+}
+
+function typeLabel(value: MediaType): string {
+  if (value === 'show') return 'TV show'
+  if (value === 'book') return 'Book'
+  return 'Movie'
 }
 
 function pickBestResult(results: SearchResult[], query: string): SearchResult {
@@ -301,11 +308,18 @@ export function TitleForm({
     enrichment.runtime_or_pages ||
     enrichment.synopsis
 
+  const selectChip = (selected: boolean) =>
+    `rounded-full border px-4 py-2 text-sm transition duration-150 active:scale-95 ${
+      selected
+        ? 'border-white bg-white text-ink'
+        : 'border-fg/50 bg-transparent text-fg'
+    }`
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <span className="mb-2 block text-sm text-muted">Type</span>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex rounded-2xl bg-surface p-1">
           {MEDIA_TYPES.map((option) => {
             const selected = mediaType === option.value
             return (
@@ -313,9 +327,11 @@ export function TitleForm({
                 key={option.value}
                 type="button"
                 onClick={() => setMediaType(option.value)}
-                className={`chip ${selected ? 'chip-on' : 'chip-off'}`}
+                className={`flex-1 rounded-xl py-2.5 text-sm transition duration-150 ${
+                  selected ? 'bg-white font-medium text-ink' : 'text-muted'
+                }`}
               >
-                {option.label}
+                {typeLabel(option.value)}
               </button>
             )
           })}
@@ -323,7 +339,7 @@ export function TitleForm({
       </div>
 
       <div className="relative">
-        <label htmlFor="name" className="mb-1 block text-sm text-muted">
+        <label htmlFor="name" className="mb-2 block text-sm text-muted">
           Name
         </label>
         <input
@@ -331,6 +347,7 @@ export function TitleForm({
           type="text"
           required
           autoComplete="off"
+          placeholder="Search a title"
           value={name}
           onChange={(event) => clearEnrichmentOnManualEdit(event.target.value)}
           onFocus={() => {
@@ -339,7 +356,7 @@ export function TitleForm({
           onBlur={() => {
             blurTimeout.current = setTimeout(() => setDropdownOpen(false), 150)
           }}
-          className="field"
+          className="field rounded-xl py-3"
         />
         {searching && (
           <p className="mt-1 text-xs text-muted">Searching…</p>
@@ -350,7 +367,7 @@ export function TitleForm({
 
         {dropdownOpen && results.length > 0 && (
           <ul
-            className="absolute z-10 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-border bg-surface shadow-sm"
+            className="absolute z-10 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-border bg-surface shadow-sm"
             onMouseDown={(event) => event.preventDefault()}
           >
             {results.map((result) => (
@@ -391,7 +408,7 @@ export function TitleForm({
       </div>
 
       {hasEnrichment && (
-        <div className="rounded-lg border border-border bg-surface p-3 text-sm text-muted">
+        <div className="rounded-xl border border-border bg-surface p-3 text-sm text-muted">
           <div className="flex gap-3">
             {enrichment.poster_url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -419,39 +436,47 @@ export function TitleForm({
       )}
 
       <div>
-        <label htmlFor="suggested_by" className="mb-1 block text-sm text-muted">
-          Suggested by <span className="text-muted/80">(optional)</span>
+        <label htmlFor="suggested_by" className="mb-2 block text-sm text-muted">
+          Suggested by · optional
         </label>
         <input
           id="suggested_by"
           type="text"
+          placeholder="Who told you about it"
           value={suggestedBy}
           onChange={(event: ChangeEvent<HTMLInputElement>) =>
             setSuggestedBy(event.target.value)
           }
-          className="field"
+          className="field rounded-xl py-3"
         />
       </div>
 
       <div>
-        <label htmlFor="custom_mood" className="mb-1 block text-sm text-muted">
-          Moods
+        <label htmlFor="custom_mood" className="mb-2 block text-sm text-muted">
+          Mood
         </label>
-        <input
-          id="custom_mood"
-          type="text"
-          value={customMoodInput}
-          onChange={(event) => setCustomMoodInput(event.target.value)}
-          onBlur={handleAddCustomMood}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault()
-              handleAddCustomMood()
-            }
-          }}
-          className="field"
-        />
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted"
+            strokeWidth={1.75}
+          />
+          <input
+            id="custom_mood"
+            type="text"
+            placeholder="add a mood"
+            value={customMoodInput}
+            onChange={(event) => setCustomMoodInput(event.target.value)}
+            onBlur={handleAddCustomMood}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                handleAddCustomMood()
+              }
+            }}
+            className="field rounded-xl py-3 pl-10"
+          />
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
           {moodOptions.map((tag) => {
             const selected = moodTags.includes(tag)
             return (
@@ -459,7 +484,7 @@ export function TitleForm({
                 key={tag}
                 type="button"
                 onClick={() => toggleMoodTag(tag)}
-                className={`chip ${selected ? 'chip-on' : 'chip-off'}`}
+                className={selectChip(selected)}
               >
                 {moodLabel(tag)}
               </button>
@@ -469,7 +494,7 @@ export function TitleForm({
       </div>
 
       <div>
-        <span className="mb-2 block text-sm text-muted">Watch later</span>
+        <span className="mb-3 block text-sm text-muted">When will you watch it</span>
         <div className="flex flex-wrap gap-2">
           {WATCH_LATER_OPTIONS.map((option) => {
             const selected = watchLater === option.value
@@ -478,7 +503,7 @@ export function TitleForm({
                 key={option.value}
                 type="button"
                 onClick={() => setWatchLater(option.value)}
-                className={`chip ${selected ? 'chip-on' : 'chip-off'}`}
+                className={selectChip(selected)}
               >
                 {option.label}
               </button>
@@ -488,7 +513,7 @@ export function TitleForm({
       </div>
 
       {duplicate && (
-        <div className="rounded-lg border border-border bg-surface px-3 py-2 text-sm" role="status">
+        <div className="rounded-xl border border-border bg-surface px-3 py-2 text-sm" role="status">
           <p className="text-fg">Already in your backlog</p>
           <p className="mt-0.5 text-xs text-muted">
             {duplicate.status === 'done'
@@ -512,7 +537,11 @@ export function TitleForm({
         </p>
       )}
 
-      <button type="submit" disabled={submitting || Boolean(duplicate)} className="btn-primary w-full">
+      <button
+        type="submit"
+        disabled={submitting || Boolean(duplicate)}
+        className="w-full rounded-xl bg-accent py-3.5 text-base font-semibold text-white transition duration-150 hover:brightness-110 active:scale-95 disabled:opacity-60"
+      >
         {submitting ? 'Adding…' : duplicate ? 'Already in your backlog' : 'Add title'}
       </button>
     </form>
