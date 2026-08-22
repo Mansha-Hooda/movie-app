@@ -1,28 +1,18 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { BookOpen, Clapperboard, MoreVertical, Tv } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { updateTitleStatus } from '@/lib/titles/api'
-import { MEDIA_TYPES, WATCH_LATER_OPTIONS } from '@/lib/titles/constants'
+import { MoreVertical } from 'lucide-react'
+import { PosterImage } from '@/components/PosterImage'
+import { commitmentLabel, formatAddedDate } from '@/lib/titles/constants'
 import type { Title } from '@/types/database'
 
 type TitleCardProps = {
   title: Title
-  onUpdate?: (title: Title) => void
+  onOpen?: (title: Title) => void
   onDelete?: (title: Title) => void
 }
 
-function TypeIcon({ type }: { type: Title['media_type'] }) {
-  const className = 'h-4 w-4 text-fg/80'
-  if (type === 'show') return <Tv className={className} strokeWidth={1.75} />
-  if (type === 'book') return <BookOpen className={className} strokeWidth={1.75} />
-  return <Clapperboard className={className} strokeWidth={1.75} />
-}
-
-export function TitleCard({ title: initialTitle, onUpdate, onDelete }: TitleCardProps) {
-  const [title, setTitle] = useState(initialTitle)
-  const [updating, setUpdating] = useState(false)
+export function TitleCard({ title, onOpen, onDelete }: TitleCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -41,28 +31,6 @@ export function TitleCard({ title: initialTitle, onUpdate, onDelete }: TitleCard
     return () => document.removeEventListener('mousedown', handlePointerDown)
   }, [menuOpen])
 
-  function commitUpdate(next: Title) {
-    setTitle(next)
-    onUpdate?.(next)
-  }
-
-  async function handleMarkDone() {
-    if (updating) return
-
-    const previous = title
-    setUpdating(true)
-    commitUpdate({ ...title, status: 'done' })
-
-    const supabase = createClient()
-    const { error: updateError } = await updateTitleStatus(supabase, title.id, 'done')
-
-    setUpdating(false)
-
-    if (updateError) {
-      commitUpdate(previous)
-    }
-  }
-
   function handleDeleteClick() {
     if (!confirmDelete) {
       setConfirmDelete(true)
@@ -74,60 +42,31 @@ export function TitleCard({ title: initialTitle, onUpdate, onDelete }: TitleCard
     onDelete?.(title)
   }
 
-  const watchLaterLabel =
-    WATCH_LATER_OPTIONS.find((option) => option.value === title.time_commitment)?.label ??
-    title.time_commitment ??
-    '—'
-  const typeLabel =
-    MEDIA_TYPES.find((option) => option.value === title.media_type)?.label ??
-    title.media_type ??
-    '—'
-  const doneLabel =
-    title.media_type === 'book' ? 'Mark as Read' : 'Mark as Watched'
-
   return (
     <article className="flex h-full flex-col">
-      <div className="relative mb-2.5 overflow-hidden rounded-xl bg-surface">
-        {title.poster_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={title.poster_url}
-            alt=""
-            className="aspect-[2/3] w-full object-cover"
-          />
-        ) : (
-          <div
-            className="aspect-[2/3] w-full"
-            style={{
-              background:
-                'linear-gradient(160deg, #2a2633 0%, #1c1a20 45%, #332f3d 100%)',
-            }}
-          />
-        )}
+      <button
+        type="button"
+        onClick={() => onOpen?.(title)}
+        className="mb-2.5 w-full text-left"
+        aria-label={`Open ${title.name}`}
+      >
+        <PosterImage title={title} layoutId={`poster-${title.id}`} />
+      </button>
 
-        <span className="absolute top-2 right-2 rounded-full bg-page/55 p-1.5 backdrop-blur-[2px]">
-          <TypeIcon type={title.media_type} />
-        </span>
-      </div>
+      <h2 className="truncate text-[0.95rem] font-medium text-fg">{title.name}</h2>
+      <p className="mt-0.5 text-sm text-muted">{commitmentLabel(title.time_commitment)}</p>
 
-      <h2 className="h-[2.6em] text-[0.95rem] font-medium leading-snug text-fg line-clamp-2">
-        {title.name}
-      </h2>
-      <p className="mt-0.5 text-sm text-muted">
-        {watchLaterLabel} · {typeLabel}
-      </p>
+      <div className="mt-2 flex items-center gap-1.5">
+        <p className="min-w-0 flex-1 truncate text-sm text-muted">
+          {formatAddedDate(title.date_added)}
+        </p>
 
-      <div className="mt-2.5 flex items-center gap-1.5">
-        <button
-          type="button"
-          disabled={updating}
-          onClick={handleMarkDone}
-          className="flex min-h-9 flex-1 items-center justify-center rounded-lg bg-white px-2.5 py-1.5 text-xs font-medium text-ink transition duration-150 hover:brightness-95 active:scale-95 disabled:opacity-60"
+        <div
+          className="relative"
+          ref={menuRef}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
         >
-          {doneLabel}
-        </button>
-
-        <div className="relative" ref={menuRef}>
           <button
             type="button"
             aria-label="More actions"

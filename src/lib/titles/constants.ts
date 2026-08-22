@@ -24,8 +24,31 @@ export const MOOD_DISPLAY_LABELS: Record<MoodTag, string> = {
 export const WATCH_LATER_OPTIONS: { value: WatchLater; label: string }[] = [
   { value: 'tonight', label: 'Tonight' },
   { value: 'weekend', label: 'Weekend' },
-  { value: 'soon', label: 'Soon' },
+  { value: 'soon', label: 'Later' },
 ]
+
+/** Display labels for stored commitment values (including legacy quick/medium/long). */
+export function commitmentLabel(value: string | null | undefined): string {
+  switch (value) {
+    case 'quick':
+    case 'tonight':
+      return 'Tonight'
+    case 'medium':
+    case 'weekend':
+      return 'Weekend'
+    case 'long':
+    case 'soon':
+      return 'Later'
+    default:
+      return value?.trim() || '—'
+  }
+}
+
+export function formatAddedDate(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return 'Added —'
+  return `Added ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+}
 
 /** tonight → weekend → soon (legacy duration values map to the same order). */
 export const WATCH_LATER_ORDER: Record<string, number> = {

@@ -1,5 +1,10 @@
+'use client'
+
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { AnimatePresence, LayoutGroup } from 'framer-motion'
 import { TitleCard } from '@/components/TitleCard'
+import { TitleDetail } from '@/components/TitleDetail'
 import type { Title } from '@/types/database'
 
 type TitleGridProps = {
@@ -23,6 +28,35 @@ export function TitleGrid({
   onTitleUpdate,
   onTitleDelete,
 }: TitleGridProps) {
+  const [selected, setSelected] = useState<Title | null>(null)
+  const selectedRef = useRef<Title | null>(null)
+
+  const closeDetail = useCallback(() => {
+    if (selectedRef.current && window.history.state?.titleDetail) {
+      window.history.back()
+      return
+    }
+
+    selectedRef.current = null
+    setSelected(null)
+  }, [])
+
+  useEffect(() => {
+    function onPopState() {
+      selectedRef.current = null
+      setSelected(null)
+    }
+
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  function openDetail(title: Title) {
+    selectedRef.current = title
+    setSelected(title)
+    window.history.pushState({ titleDetail: title.id }, '')
+  }
+
   if (titles.length === 0) {
     return (
       <div className="rounded-xl border border-border bg-surface p-8 text-center">
@@ -39,16 +73,32 @@ export function TitleGrid({
     )
   }
 
+  const selectedTitle = selected
+    ? (titles.find((title) => title.id === selected.id) ?? selected)
+    : null
+
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-6">
-      {titles.map((title) => (
-        <TitleCard
-          key={title.id}
-          title={title}
-          onUpdate={onTitleUpdate}
-          onDelete={onTitleDelete}
-        />
-      ))}
-    </div>
+    <LayoutGroup>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-6">
+        {titles.map((title) => (
+          <TitleCard
+            key={title.id}
+            title={title}
+            onOpen={openDetail}
+            onDelete={onTitleDelete}
+          />
+        ))}
+      </div>
+
+      <AnimatePresence>
+        {selectedTitle && (
+          <TitleDetail
+            title={selectedTitle}
+            onClose={closeDetail}
+            onUpdate={onTitleUpdate}
+          />
+        )}
+      </AnimatePresence>
+    </LayoutGroup>
   )
 }
