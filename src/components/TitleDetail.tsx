@@ -173,7 +173,7 @@ export function TitleDetail({ title, onClose, onUpdate }: TitleDetailProps) {
               event.stopPropagation()
               void handleMarkDone()
             }}
-            className="btn-primary mt-6 w-full py-3"
+            className="btn-primary mt-6 w-full rounded-lg py-3"
           >
             {updating ? 'Saving…' : doneLabel}
           </button>
