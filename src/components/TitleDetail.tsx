@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { motion, type PanInfo } from 'framer-motion'
-import { ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { updateTitleStatus } from '@/lib/titles/api'
 import { commitmentLabel, formatAddedDate, MEDIA_TYPES } from '@/lib/titles/constants'
@@ -119,17 +118,16 @@ export function TitleDetail({ title, onClose, onUpdate }: TitleDetailProps) {
       dragElastic={{ top: 0.02, bottom: 0.55 }}
       dragMomentum={false}
       onDragEnd={handleDragEnd}
+      onClick={onClose}
     >
-      <div className="flex shrink-0 justify-center pt-3">
-        <button
+      <button
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="flex h-10 w-12 items-center justify-center text-fg"
+          className="flex w-full flex-col items-center pt-3 pb-1"
         >
-          <ChevronDown className="h-7 w-7" strokeWidth={1.75} />
+          <span className="h-1 w-10 rounded-full bg-muted" />
         </button>
-      </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-6 pb-10">
         <motion.div
@@ -171,7 +169,10 @@ export function TitleDetail({ title, onClose, onUpdate }: TitleDetailProps) {
           <button
             type="button"
             disabled={updating}
-            onClick={handleMarkDone}
+            onClick={(event) => {
+              event.stopPropagation()
+              void handleMarkDone()
+            }}
             className="btn-primary mt-6 w-full py-3"
           >
             {updating ? 'Saving…' : doneLabel}
