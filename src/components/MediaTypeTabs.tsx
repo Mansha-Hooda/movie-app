@@ -4,10 +4,9 @@ import type { MediaType } from '@/types/database'
 
 export type MediaTypeTab = 'all' | MediaType
 
-const TABS: { value: MediaTypeTab; label: string }[] = [
-  { value: 'all', label: 'All' },
+const TABS: { value: MediaType; label: string }[] = [
   { value: 'movie', label: 'Movies' },
-  { value: 'show', label: 'Shows' },
+  { value: 'show', label: 'TV shows' },
   { value: 'book', label: 'Books' },
 ]
 
@@ -18,7 +17,11 @@ type MediaTypeTabsProps = {
 
 export function MediaTypeTabs({ value, onChange }: MediaTypeTabsProps) {
   return (
-    <div className="flex flex-wrap justify-center gap-2" role="tablist" aria-label="Media type">
+    <div
+      className="flex rounded-2xl bg-surface p-1"
+      role="tablist"
+      aria-label="Media type"
+    >
       {TABS.map((tab) => {
         const selected = value === tab.value
         return (
@@ -27,8 +30,10 @@ export function MediaTypeTabs({ value, onChange }: MediaTypeTabsProps) {
             type="button"
             role="tab"
             aria-selected={selected}
-            onClick={() => onChange(tab.value)}
-            className={`chip ${selected ? 'chip-on' : 'chip-off'}`}
+            onClick={() => onChange(selected ? 'all' : tab.value)}
+            className={`flex-1 rounded-xl py-2.5 text-sm transition duration-150 ${
+              selected ? 'bg-white font-medium text-ink' : 'text-muted'
+            }`}
           >
             {tab.label}
           </button>

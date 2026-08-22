@@ -10,6 +10,10 @@ export const metadata: Metadata = {
     capable: true,
     title: 'Backlog',
   },
+  icons: {
+    icon: '/icon.png',
+    apple: '/apple-touch-icon.png',
+  },
 }
 
 export const viewport: Viewport = {
