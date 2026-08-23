@@ -5,7 +5,7 @@ const STATIC_CACHE = `backlog-static-${CACHE_VERSION}`
 const SHARE_CACHE = 'share-target-v1'
 const SHARE_IMAGE_KEY = 'shared-image'
 
-const PRECACHE_URLS = ['/manifest.json']
+const PRECACHE_URLS = ['/manifest.json', '/splash.png', '/logo-mark.png', '/icon.png']
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
