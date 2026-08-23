@@ -25,6 +25,7 @@ IOS_SPLASHES = [
     (1284, 2778, '(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)'),
     (1290, 2796, '(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)'),
     (1320, 2868, '(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3)'),
+    (1206, 2622, '(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3)'),
 ]
 
 
@@ -159,6 +160,9 @@ def main() -> None:
     save_png(make_icon(glyph, 180), PUBLIC / 'apple-touch-icon.png')
     save_png(make_icon(glyph, 192), PUBLIC / 'pwa-192x192.png')
     save_png(make_icon(glyph, 512), PUBLIC / 'pwa-512x512.png')
+    Image.new('RGB', (192, 192), PURPLE[:3]).save(PUBLIC / 'pwa-splash-192.png', 'PNG')
+    Image.new('RGB', (512, 512), PURPLE[:3]).save(PUBLIC / 'pwa-splash-512.png', 'PNG')
+    print('wrote', PUBLIC / 'pwa-splash-512.png')
     save_png(make_icon(glyph, 512), APP / 'icon.png')
     save_png(make_icon(glyph, 180), APP / 'apple-icon.png')
 

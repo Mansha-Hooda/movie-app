@@ -5,22 +5,30 @@ import { useEffect, useState } from 'react'
 const SPLASH_MS = 1400
 const SPLASH_KEY = 'bookmark-splash-shown'
 
+function alreadyShown(): boolean {
+  try {
+    return sessionStorage.getItem(SPLASH_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
 /** Full-screen launch splash matching the BOOKMARK brand frame. */
 export function SplashScreen() {
-  const [visible, setVisible] = useState(false)
+  const [visible, setVisible] = useState(true)
   const [exiting, setExiting] = useState(false)
 
   useEffect(() => {
-    try {
-      if (sessionStorage.getItem(SPLASH_KEY)) return
-    } catch {
-      // sessionStorage can throw in private mode — still show once this mount.
+    if (alreadyShown()) {
+      document.documentElement.classList.add('splash-done')
+      setVisible(false)
+      return
     }
 
-    setVisible(true)
     const hide = window.setTimeout(() => setExiting(true), SPLASH_MS)
     const remove = window.setTimeout(() => {
       setVisible(false)
+      document.documentElement.classList.add('splash-done')
       try {
         sessionStorage.setItem(SPLASH_KEY, '1')
       } catch {

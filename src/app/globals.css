@@ -11,6 +11,14 @@
   --color-danger: #c47a86;
 }
 
+html {
+  background-color: #6c00f8;
+}
+
+html.splash-done {
+  background-color: var(--color-page);
+}
+
 body {
   margin: 0;
   background-color: var(--color-page);
