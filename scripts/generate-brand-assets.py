@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 PURPLE = (108, 0, 248, 255)  # #6C00F8
 WHITE = (255, 255, 255, 255)
@@ -100,7 +100,45 @@ def fit_glyph(glyph: Image.Image, box: int) -> Image.Image:
     return canvas
 
 
+def load_logo_source() -> Image.Image:
+    for path in (SOURCE, PUBLIC / 'logo.jpg'):
+        if path.exists():
+            return Image.open(path).convert('RGB')
+    raise FileNotFoundError(f'Missing logo source: {SOURCE}')
+
+
+def make_app_icon(logo: Image.Image, size: int) -> Image.Image:
+    """Scale the original squircle (gradient + mark) to a full-bleed square.
+
+    Insets past the white JPEG corners so Android/iOS masks keep the shades.
+    """
+    rgb = logo.convert('RGB')
+    width, height = rgb.size
+    pixels = rgb.load()
+
+    def is_canvas_white(x: int, y: int) -> bool:
+        r, g, b = pixels[x, y]
+        return r > 240 and g > 240 and b > 240
+
+    xs, ys = [], []
+    for y in range(height):
+        for x in range(width):
+            if not is_canvas_white(x, y):
+                xs.append(x)
+                ys.append(y)
+    if not xs:
+        return ImageOps.fit(rgb, (size, size), Image.Resampling.LANCZOS)
+
+    x0, x1 = min(xs), max(xs) + 1
+    y0, y1 = min(ys), max(ys) + 1
+    box_w, box_h = x1 - x0, y1 - y0
+    inset = max(2, int(min(box_w, box_h) * 0.06))
+    crop = rgb.crop((x0 + inset, y0 + inset, x1 - inset, y1 - inset))
+    return ImageOps.fit(crop, (size, size), Image.Resampling.LANCZOS)
+
+
 def make_icon(glyph: Image.Image, size: int, inset_ratio: float = 0.22) -> Image.Image:
+    """Solid-brand tile for splash composition (not the home-screen icon)."""
     icon = Image.new('RGBA', (size, size), PURPLE)
     inner = int(size * (1 - inset_ratio * 2))
     mark = fit_glyph(glyph, inner)
@@ -153,21 +191,21 @@ def save_png(image: Image.Image, path: Path) -> None:
 
 def main() -> None:
     glyph = load_glyph()
+    logo = load_logo_source()
     save_png(glyph, PUBLIC / 'logo-mark.png')
 
-    icon_1024 = make_icon(glyph, 1024)
-    save_png(icon_1024, PUBLIC / 'icon.png')
-    save_png(make_icon(glyph, 180), PUBLIC / 'apple-touch-icon.png')
-    save_png(make_icon(glyph, 192), PUBLIC / 'pwa-192x192.png')
-    save_png(make_icon(glyph, 512), PUBLIC / 'pwa-512x512.png')
+    save_png(make_app_icon(logo, 1024), PUBLIC / 'icon.png')
+    save_png(make_app_icon(logo, 180), PUBLIC / 'apple-touch-icon.png')
+    save_png(make_app_icon(logo, 192), PUBLIC / 'pwa-192x192.png')
+    save_png(make_app_icon(logo, 512), PUBLIC / 'pwa-512x512.png')
     # Chrome's launch splash uses purpose "any" — use the BOOKMARK frame, not the logo tile.
     save_png(make_splash(glyph, 192, 192), PUBLIC / 'pwa-splash-192.png')
     save_png(make_splash(glyph, 512, 512), PUBLIC / 'pwa-splash-512.png')
-    save_png(make_icon(glyph, 512), APP / 'icon.png')
-    save_png(make_icon(glyph, 180), APP / 'apple-icon.png')
+    save_png(make_app_icon(logo, 512), APP / 'icon.png')
+    save_png(make_app_icon(logo, 180), APP / 'apple-icon.png')
 
     ico_sizes = [16, 32, 48]
-    icos = [make_icon(glyph, s) for s in ico_sizes]
+    icos = [make_app_icon(logo, s) for s in ico_sizes]
     icos[0].save(PUBLIC / 'favicon.ico', format='ICO', sizes=[(s, s) for s in ico_sizes])
     print('wrote', PUBLIC / 'favicon.ico')
 

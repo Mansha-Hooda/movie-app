@@ -58,7 +58,7 @@ const APPLE_STARTUP_IMAGES = [
 export const metadata: Metadata = {
   title: 'Backlog',
   description: 'Capture and surface movie, show, and book recommendations.',
-  manifest: '/manifest.json?v=5',
+  manifest: '/manifest.json?v=6',
   appleWebApp: {
     capable: true,
     title: 'BOOKMARK',
