@@ -12,11 +12,12 @@ export function PwaRegister() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
 
+    const hadController = Boolean(navigator.serviceWorker.controller)
     let refreshing = false
 
     function onControllerChange() {
-      // New SW took control — reload once so the client gets the fresh shell.
-      if (refreshing) return
+      // First SW taking control is not an update — don't reload (avoids a second splash).
+      if (!hadController || refreshing) return
       refreshing = true
       window.location.reload()
     }

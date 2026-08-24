@@ -160,9 +160,9 @@ def main() -> None:
     save_png(make_icon(glyph, 180), PUBLIC / 'apple-touch-icon.png')
     save_png(make_icon(glyph, 192), PUBLIC / 'pwa-192x192.png')
     save_png(make_icon(glyph, 512), PUBLIC / 'pwa-512x512.png')
-    Image.new('RGB', (192, 192), PURPLE[:3]).save(PUBLIC / 'pwa-splash-192.png', 'PNG')
-    Image.new('RGB', (512, 512), PURPLE[:3]).save(PUBLIC / 'pwa-splash-512.png', 'PNG')
-    print('wrote', PUBLIC / 'pwa-splash-512.png')
+    # Chrome's launch splash uses purpose "any" — use the BOOKMARK frame, not the logo tile.
+    save_png(make_splash(glyph, 192, 192), PUBLIC / 'pwa-splash-192.png')
+    save_png(make_splash(glyph, 512, 512), PUBLIC / 'pwa-splash-512.png')
     save_png(make_icon(glyph, 512), APP / 'icon.png')
     save_png(make_icon(glyph, 180), APP / 'apple-icon.png')
 

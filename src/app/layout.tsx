@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { PwaRegister } from '@/components/PwaRegister'
-import { SplashScreen } from '@/components/SplashScreen'
 import './globals.css'
 
 const APPLE_STARTUP_IMAGES = [
@@ -59,7 +58,7 @@ const APPLE_STARTUP_IMAGES = [
 export const metadata: Metadata = {
   title: 'Backlog',
   description: 'Capture and surface movie, show, and book recommendations.',
-  manifest: '/manifest.json',
+  manifest: '/manifest.json?v=4',
   appleWebApp: {
     capable: true,
     title: 'Backlog',
@@ -73,7 +72,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#121014',
+  themeColor: '#6C00F8',
 }
 
 export default function RootLayout({
@@ -83,17 +82,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "try{if(sessionStorage.getItem('bookmark-splash-shown')==='1')document.documentElement.classList.add('splash-done')}catch(e){}",
-          }}
-        />
-      </head>
       <body className="min-h-svh bg-page text-fg antialiased">
         <PwaRegister />
-        <SplashScreen />
         {children}
       </body>
     </html>
