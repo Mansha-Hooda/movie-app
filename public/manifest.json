@@ -4,7 +4,7 @@
   "description": "Capture and surface movie, show, and book recommendations.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#6C00F8",
+  "background_color": "#121014",
   "theme_color": "#6C00F8",
   "icons": [
     {
