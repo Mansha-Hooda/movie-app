@@ -1,5 +1,6 @@
 import { IDENTIFY_PROMPT } from '@/lib/identify/prompt'
-import { emptyIdentifyResult, parseIdentifyJson } from '@/lib/identify/parse'
+import { emptyIdentifyResults, parseIdentifyJson } from '@/lib/identify/parse'
+import { IDENTIFY_TITLES_SCHEMA } from '@/lib/identify/schema'
 import type { IdentifyResult } from '@/lib/identify/types'
 
 const GEMINI_MODEL = 'gemini-3.5-flash-lite'
@@ -33,7 +34,7 @@ export function isRetryableGeminiError(message: string, status?: number): boolea
 export async function identifyWithGemini(
   imageBase64: string,
   mimeType: string,
-): Promise<IdentifyResult> {
+): Promise<IdentifyResult[]> {
   const key = getApiKey()
 
   const response = await fetch(GEMINI_URL, {
@@ -62,18 +63,7 @@ export async function identifyWithGemini(
           thinkingLevel: 'minimal',
         },
         responseMimeType: 'application/json',
-        responseSchema: {
-          type: 'OBJECT',
-          properties: {
-            name: { type: 'STRING' },
-            media_type: {
-              type: 'STRING',
-              enum: ['movie', 'show', 'book'],
-            },
-            confidence: { type: 'NUMBER' },
-          },
-          required: ['name', 'media_type', 'confidence'],
-        },
+        responseSchema: IDENTIFY_TITLES_SCHEMA,
       },
     }),
   })
@@ -94,13 +84,13 @@ export async function identifyWithGemini(
     .trim()
 
   if (!text) {
-    return emptyIdentifyResult()
+    return emptyIdentifyResults()
   }
 
   try {
     return parseIdentifyJson(text)
   } catch {
-    return emptyIdentifyResult()
+    return emptyIdentifyResults()
   }
 }
 
@@ -108,7 +98,7 @@ export async function identifyWithGemini(
 export async function identifyWithGeminiRetrying(
   imageBase64: string,
   mimeType: string,
-): Promise<IdentifyResult> {
+): Promise<IdentifyResult[]> {
   try {
     return await identifyWithGemini(imageBase64, mimeType)
   } catch (firstError) {

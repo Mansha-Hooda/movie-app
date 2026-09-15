@@ -99,8 +99,11 @@ export async function POST(request: Request) {
       }
     }
 
-    const result = await identifyScreenshot(imageBase64, mimeType)
-    return NextResponse.json({ result })
+    const results = await identifyScreenshot(imageBase64, mimeType)
+    return NextResponse.json({
+      results,
+      result: results[0] ?? { name: null, media_type: null, confidence: 0 },
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Identification failed'
     console.error('[identify-screenshot]', message)

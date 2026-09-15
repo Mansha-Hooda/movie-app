@@ -1,5 +1,5 @@
 import { IDENTIFY_REEL_PROMPT } from '@/lib/identify/reel-prompt'
-import { emptyIdentifyResult, parseIdentifyJson } from '@/lib/identify/parse'
+import { emptyIdentifyResults, parseIdentifyJson } from '@/lib/identify/parse'
 import type { IdentifyResult } from '@/lib/identify/types'
 import { isGroqConfigured } from '@/lib/identify/groq'
 
@@ -28,7 +28,7 @@ function isRetryableGroqFailure(status: number, message: string): boolean {
 async function callGroqTextOnce(
   key: string,
   combinedText: string,
-): Promise<IdentifyResult> {
+): Promise<IdentifyResult[]> {
   const userMessage = `${IDENTIFY_REEL_PROMPT}\n\n---\nReel caption and transcript:\n${combinedText}`
 
   const response = await fetch(GROQ_URL, {
@@ -40,7 +40,7 @@ async function callGroqTextOnce(
     body: JSON.stringify({
       model: GROQ_MODEL,
       temperature: 0.2,
-      max_completion_tokens: 512,
+      max_completion_tokens: 2048,
       response_format: { type: 'json_object' },
       messages: [{ role: 'user', content: userMessage }],
     }),
@@ -79,13 +79,13 @@ async function callGroqTextOnce(
   try {
     return parseIdentifyJson(text)
   } catch {
-    return emptyIdentifyResult()
+    return emptyIdentifyResults()
   }
 }
 
 export async function identifyTextWithGroq(
   combinedText: string,
-): Promise<IdentifyResult> {
+): Promise<IdentifyResult[]> {
   const key = getApiKey()
   if (!key) {
     throw new Error('GROQ_API_KEY is not configured')

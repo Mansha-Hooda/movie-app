@@ -1,5 +1,5 @@
 import { IDENTIFY_PROMPT } from '@/lib/identify/prompt'
-import { emptyIdentifyResult, parseIdentifyJson } from '@/lib/identify/parse'
+import { emptyIdentifyResults, parseIdentifyJson } from '@/lib/identify/parse'
 import type { IdentifyResult } from '@/lib/identify/types'
 
 /** Groq preview multimodal model (vision via OpenAI-compatible image_url blocks). */
@@ -33,8 +33,7 @@ async function callGroqOnce(
   key: string,
   imageBase64: string,
   mimeType: string,
-): Promise<IdentifyResult> {
-  // OpenAI-compatible vision: text + image_url (data URL) content blocks
+): Promise<IdentifyResult[]> {
   const dataUrl = `data:${mimeType};base64,${imageBase64}`
 
   const response = await fetch(GROQ_URL, {
@@ -46,7 +45,7 @@ async function callGroqOnce(
     body: JSON.stringify({
       model: GROQ_MODEL,
       temperature: 0.2,
-      max_completion_tokens: 512,
+      max_completion_tokens: 2048,
       response_format: { type: 'json_object' },
       messages: [
         {
@@ -86,7 +85,6 @@ async function callGroqOnce(
 
   const text = data.choices?.[0]?.message?.content?.trim()
   if (!text) {
-    // Preview models sometimes return empty content under load
     const error = new Error(
       'Groq preview model returned an empty response',
     ) as Error & { retryable?: boolean }
@@ -98,18 +96,18 @@ async function callGroqOnce(
     return parseIdentifyJson(text)
   } catch {
     console.warn('[identify/groq] Failed to parse JSON from preview model')
-    return emptyIdentifyResult()
+    return emptyIdentifyResults()
   }
 }
 
 /**
- * Identify a screenshot via Groq Qwen3.6-27B vision (preview).
+ * Identify titles in a screenshot via Groq Qwen3.6-27B vision (preview).
  * Retries once on transient/preview instability before failing.
  */
 export async function identifyWithGroq(
   imageBase64: string,
   mimeType: string,
-): Promise<IdentifyResult> {
+): Promise<IdentifyResult[]> {
   const key = getApiKey()
   if (!key) {
     throw new Error('GROQ_API_KEY is not configured')

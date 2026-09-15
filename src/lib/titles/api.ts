@@ -102,6 +102,38 @@ export async function createTitle(
   return { error: null }
 }
 
+export async function createTitles(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  inputs: CreateTitleInput[],
+): Promise<{ error: Error | null }> {
+  if (inputs.length === 0) {
+    return { error: null }
+  }
+
+  const { error } = await supabase.from('titles').insert(
+    inputs.map((input) => ({
+      user_id: userId,
+      name: input.name.trim(),
+      media_type: input.media_type,
+      suggested_by: input.suggested_by?.trim() || null,
+      mood_tags: input.mood_tags,
+      time_commitment: input.time_commitment,
+      status: 'backlog' as const,
+      poster_url: input.poster_url ?? null,
+      genre: input.genre ?? null,
+      runtime_or_pages: input.runtime_or_pages ?? null,
+      synopsis: input.synopsis ?? null,
+    })),
+  )
+
+  if (error) {
+    return { error: new Error(error.message) }
+  }
+
+  return { error: null }
+}
+
 export async function updateTitleStatus(
   supabase: SupabaseClient<Database>,
   titleId: string,

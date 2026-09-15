@@ -6,23 +6,23 @@ import type { IdentifyResult } from '@/lib/identify/types'
 
 export type { IdentifyResult }
 
-function isValidResult(result: IdentifyResult): boolean {
-  return Boolean(result.name?.trim() && result.media_type)
+function isValidResult(results: IdentifyResult[]): boolean {
+  return results.some((result) => Boolean(result.name?.trim() && result.media_type))
 }
 
 type ProviderAttempt = {
   source: string
-  result?: IdentifyResult
+  result?: IdentifyResult[]
   error?: string
 }
 
 /**
- * Race provider promises; first response with name + media_type wins.
+ * Race provider promises; first response with at least one named title wins.
  * Failures / empty parses do not reject early — wait for remaining providers.
  */
 async function raceFirstValid(
-  providers: { source: string; run: () => Promise<IdentifyResult> }[],
-): Promise<IdentifyResult> {
+  providers: { source: string; run: () => Promise<IdentifyResult[]> }[],
+): Promise<IdentifyResult[]> {
   if (providers.length === 0) {
     throw new Error('No identification providers configured')
   }
@@ -31,7 +31,7 @@ async function raceFirstValid(
     return providers[0].run()
   }
 
-  return new Promise<IdentifyResult>((resolve, reject) => {
+  return new Promise<IdentifyResult[]>((resolve, reject) => {
     let settled = false
     let pending = providers.length
     const attempts: ProviderAttempt[] = []
@@ -42,6 +42,12 @@ async function raceFirstValid(
       const softMiss = attempts.find((a) => a.result && !isValidResult(a.result))
       if (softMiss?.result) {
         resolve(softMiss.result)
+        return
+      }
+
+      const empty = attempts.find((a) => a.result)
+      if (empty?.result) {
+        resolve(empty.result)
         return
       }
 
@@ -84,14 +90,14 @@ async function raceFirstValid(
 }
 
 /**
- * Identify a title from a screenshot.
+ * Identify titles from a screenshot.
  * Fires Gemini and Groq (when configured) in parallel; first valid result wins.
  */
 export async function identifyScreenshot(
   imageBase64: string,
   mimeType: string,
-): Promise<IdentifyResult> {
-  const providers: { source: string; run: () => Promise<IdentifyResult> }[] = [
+): Promise<IdentifyResult[]> {
+  const providers: { source: string; run: () => Promise<IdentifyResult[]> }[] = [
     {
       source: 'gemini',
       run: () => identifyWithGemini(imageBase64, mimeType),
@@ -109,16 +115,16 @@ export async function identifyScreenshot(
 }
 
 /**
- * Identify a title from reel caption + transcript text.
+ * Identify titles from reel caption + transcript text.
  * Fires Gemini and Groq (when configured) in parallel; first valid result wins.
  */
-export async function identifyFromText(combinedText: string): Promise<IdentifyResult> {
+export async function identifyFromText(combinedText: string): Promise<IdentifyResult[]> {
   const text = combinedText.trim()
   if (!text) {
-    return { name: null, media_type: null, confidence: 0 }
+    return []
   }
 
-  const providers: { source: string; run: () => Promise<IdentifyResult> }[] = [
+  const providers: { source: string; run: () => Promise<IdentifyResult[]> }[] = [
     {
       source: 'gemini',
       run: () => identifyTextWithGeminiRetrying(text),

@@ -1,16 +1,22 @@
-export const IDENTIFY_PROMPT = `You are identifying a movie, TV show, or book from a screenshot.
-The image may be a text message, Google search, IMDb/Letterboxd page, Amazon listing, notification, or similar.
+export const IDENTIFY_PROMPT = `You are identifying every movie, TV show, or book in a screenshot.
+The image may be a text message, Google search, IMDb/Letterboxd page, Amazon listing, notification, listicle, ranking, or similar.
 
 Return JSON only matching this schema:
 {
-  "name": string | null,
-  "media_type": "movie" | "show" | "book" | null,
-  "confidence": number
+  "titles": [
+    {
+      "name": string,
+      "media_type": "movie" | "show" | "book",
+      "confidence": number
+    }
+  ]
 }
 
 Rules:
-- name: the canonical title only (no year, no "watch", no extra words)
+- Extract EVERY distinct movie, TV show, or book title that is shown or clearly named
+- name: the canonical title only (no year, no rank numbers, no "watch", no extra words)
 - media_type: movie, show (TV series), or book
 - confidence: 0 to 1 how sure you are this is the correct title and type
-- If you cannot identify a clear title, set name and media_type to null and confidence to 0
-- Prefer the most prominent title in the screenshot when multiple appear`
+- Include a title only if you are reasonably sure it is a real movie, show, or book
+- If nothing can be identified, return {"titles": []}
+- Do not collapse a list into a single "best" title`

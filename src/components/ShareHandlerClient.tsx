@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -11,10 +12,10 @@ import {
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
-import type { IdentifyResult } from '@/lib/identify/types'
+import type { IdentifyHit, IdentifyResult } from '@/lib/identify/types'
 import { compressImageForUpload } from '@/lib/images/compress'
 import { extractInstagramUrl } from '@/lib/reels/url'
-import { findDuplicateInList } from '@/lib/titles/api'
+import { findDuplicateInList, normalizeTitleName } from '@/lib/titles/api'
 import type { MediaType, Title } from '@/types/database'
 
 const SHARE_CACHE = 'share-target-v1'
@@ -22,11 +23,18 @@ const SHARE_IMAGE_KEY = 'shared-image'
 const SHARE_LINK_KEY = 'shared-link'
 const MIN_CONFIDENCE = 0.45
 
-type Phase = 'idle' | 'loading' | 'confirm' | 'fallback'
+type Phase = 'idle' | 'loading' | 'confirm' | 'select' | 'saving' | 'success' | 'fallback'
 type InputMode = 'screenshot' | 'reel'
 
 type ShareHandlerClientProps = {
   existingTitles?: Title[]
+}
+
+type IdentifyPayload = {
+  results?: IdentifyResult[]
+  result?: IdentifyResult
+  error?: string
+  code?: string
 }
 
 async function readSharedImageFromCache(): Promise<File | null> {
@@ -93,6 +101,32 @@ function reelErrorMessage(code: string | undefined, fallback: string): string {
   return fallback
 }
 
+function parseIdentifyPayload(data: IdentifyPayload): IdentifyResult[] {
+  if (Array.isArray(data.results)) return data.results
+  if (data.result) return [data.result]
+  return []
+}
+
+function confidentHits(results: IdentifyResult[]): IdentifyHit[] {
+  return results.filter(
+    (result): result is IdentifyHit =>
+      Boolean(result.name?.trim()) &&
+      Boolean(result.media_type) &&
+      result.confidence >= MIN_CONFIDENCE,
+  )
+}
+
+function titleKey(name: string, mediaType: MediaType): string {
+  return `${mediaType}:${normalizeTitleName(name)}`
+}
+
+function mediaLabel(type: MediaType | null | undefined) {
+  if (type === 'movie') return 'Movie'
+  if (type === 'show') return 'Show'
+  if (type === 'book') return 'Book'
+  return 'Unknown'
+}
+
 export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -101,11 +135,14 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [reelUrl, setReelUrl] = useState<string | null>(null)
   const [linkDraft, setLinkDraft] = useState('')
-  const [guess, setGuess] = useState<IdentifyResult | null>(null)
+  const [guesses, setGuesses] = useState<IdentifyHit[]>([])
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set())
+  const [addedCount, setAddedCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [errorKind, setErrorKind] = useState<
     'size' | 'identify' | 'generic' | 'reel' | null
   >(null)
+
   const revokePreview = useCallback(() => {
     setPreviewUrl((current) => {
       if (current) URL.revokeObjectURL(current)
@@ -119,21 +156,30 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
     }
   }, [previewUrl])
 
-  const applyIdentifyResult = useCallback((result: IdentifyResult | undefined) => {
-    if (
-      !result?.name ||
-      !result.media_type ||
-      result.confidence < MIN_CONFIDENCE
-    ) {
-      setGuess(result ?? null)
-      setErrorKind('identify')
-      setPhase('fallback')
-      return
-    }
+  const applyIdentifyResults = useCallback(
+    (results: IdentifyResult[]) => {
+      const hits = confidentHits(results)
+      if (hits.length === 0) {
+        setGuesses([])
+        setSelectedKeys(new Set())
+        setErrorKind('identify')
+        setPhase('fallback')
+        return
+      }
 
-    setGuess(result)
-    setPhase('confirm')
-  }, [])
+      const nextSelected = new Set<string>()
+      for (const hit of hits) {
+        if (!findDuplicateInList(existingTitles, hit.name, hit.media_type)) {
+          nextSelected.add(titleKey(hit.name, hit.media_type))
+        }
+      }
+
+      setGuesses(hits)
+      setSelectedKeys(nextSelected)
+      setPhase(hits.length === 1 ? 'confirm' : 'select')
+    },
+    [existingTitles],
+  )
 
   const identifyFile = useCallback(
     async (file: File) => {
@@ -141,7 +187,8 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
       setReelUrl(null)
       setError(null)
       setErrorKind(null)
-      setGuess(null)
+      setGuesses([])
+      setSelectedKeys(new Set())
       setInputMode('screenshot')
       setPhase('loading')
 
@@ -166,9 +213,9 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
           body: formData,
         })
 
-        let data: { result?: IdentifyResult; error?: string; code?: string } = {}
+        let data: IdentifyPayload = {}
         try {
-          data = (await response.json()) as typeof data
+          data = (await response.json()) as IdentifyPayload
         } catch {
           if (response.status === 413 || response.status === 400) {
             setError('Image too large, please try again')
@@ -195,7 +242,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
           return
         }
 
-        applyIdentifyResult(data.result)
+        applyIdentifyResults(parseIdentifyPayload(data))
       } catch (err) {
         const message = err instanceof Error ? err.message : ''
         if (isTooLargeError(0, message)) {
@@ -208,7 +255,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
         setPhase('fallback')
       }
     },
-    [applyIdentifyResult, revokePreview],
+    [applyIdentifyResults, revokePreview],
   )
 
   const identifyReel = useCallback(
@@ -227,7 +274,8 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
       setLinkDraft(url)
       setError(null)
       setErrorKind(null)
-      setGuess(null)
+      setGuesses([])
+      setSelectedKeys(new Set())
       setInputMode('reel')
       setPhase('loading')
 
@@ -238,9 +286,9 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
           body: JSON.stringify({ url }),
         })
 
-        let data: { result?: IdentifyResult; error?: string; code?: string } = {}
+        let data: IdentifyPayload = {}
         try {
-          data = (await response.json()) as typeof data
+          data = (await response.json()) as IdentifyPayload
         } catch {
           setError('Something went wrong reading this reel')
           setErrorKind('generic')
@@ -256,21 +304,21 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
         }
 
         if (data.code === 'NO_TEXT') {
-          setGuess(data.result ?? null)
+          setGuesses([])
           setError(reelErrorMessage('NO_TEXT', data.error || ''))
           setErrorKind('identify')
           setPhase('fallback')
           return
         }
 
-        applyIdentifyResult(data.result)
+        applyIdentifyResults(parseIdentifyPayload(data))
       } catch {
         setError('Something went wrong reading this reel')
         setErrorKind('generic')
         setPhase('fallback')
       }
     },
-    [applyIdentifyResult, revokePreview],
+    [applyIdentifyResults, revokePreview],
   )
 
   useEffect(() => {
@@ -307,10 +355,19 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
     void identifyReel(linkDraft)
   }
 
+  const guess = guesses[0] ?? null
   const duplicate =
     guess?.name && guess.media_type
       ? findDuplicateInList(existingTitles, guess.name, guess.media_type)
       : null
+
+  const selectableCount = useMemo(
+    () =>
+      guesses.filter(
+        (hit) => !findDuplicateInList(existingTitles, hit.name, hit.media_type),
+      ).length,
+    [existingTitles, guesses],
+  )
 
   function handleConfirm() {
     if (!guess?.name || !guess.media_type || duplicate) return
@@ -321,11 +378,61 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
     router.push(`/add?${params}`)
   }
 
-  function mediaLabel(type: MediaType | null | undefined) {
-    if (type === 'movie') return 'Movie'
-    if (type === 'show') return 'Show'
-    if (type === 'book') return 'Book'
-    return 'Unknown'
+  function toggleSelected(hit: IdentifyHit) {
+    if (findDuplicateInList(existingTitles, hit.name, hit.media_type)) return
+    const key = titleKey(hit.name, hit.media_type)
+    setSelectedKeys((current) => {
+      const next = new Set(current)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  async function handleAddSelected() {
+    const selected = guesses.filter((hit) =>
+      selectedKeys.has(titleKey(hit.name, hit.media_type)),
+    )
+    if (selected.length === 0) return
+
+    setError(null)
+    setPhase('saving')
+
+    try {
+      const response = await fetch('/api/batch-add-titles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titles: selected.map((hit) => ({
+            name: hit.name,
+            media_type: hit.media_type,
+          })),
+        }),
+      })
+
+      const data = (await response.json()) as {
+        added?: number
+        error?: string
+      }
+
+      if (!response.ok) {
+        setError(data.error || 'Could not add those titles')
+        setErrorKind('generic')
+        setPhase('select')
+        return
+      }
+
+      setAddedCount(data.added ?? selected.length)
+      setPhase('success')
+      window.setTimeout(() => {
+        router.push('/')
+        router.refresh()
+      }, 1600)
+    } catch {
+      setError('Could not add those titles')
+      setErrorKind('generic')
+      setPhase('select')
+    }
   }
 
   const fallbackTitle =
@@ -348,7 +455,22 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
   const loadingLabel =
     inputMode === 'reel'
       ? 'Reading reel caption and audio…'
-      : 'Identifying title…'
+      : 'Identifying titles…'
+
+  function resetToIdle() {
+    revokePreview()
+    setReelUrl(null)
+    setLinkDraft('')
+    setGuesses([])
+    setSelectedKeys(new Set())
+    setAddedCount(0)
+    setError(null)
+    setErrorKind(null)
+    setPhase('idle')
+  }
+
+  const addLabel =
+    selectedKeys.size === 1 ? 'Add 1 title' : `Add ${selectedKeys.size} titles`
 
   return (
     <div className="space-y-6">
@@ -471,6 +593,97 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
         </div>
       )}
 
+      {phase === 'select' && (
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <p className="mb-1 text-xs uppercase tracking-wide text-accent">
+            We found {guesses.length} titles
+          </p>
+          <p className="mb-4 text-sm text-muted">
+            Uncheck anything you don&apos;t want to add.
+          </p>
+          <ul className="mb-4 divide-y divide-border overflow-hidden rounded-xl border border-border">
+            {guesses.map((hit) => {
+              const key = titleKey(hit.name, hit.media_type)
+              const already = findDuplicateInList(
+                existingTitles,
+                hit.name,
+                hit.media_type,
+              )
+              const checked = already ? false : selectedKeys.has(key)
+              return (
+                <li key={key}>
+                  <label
+                    className={`flex cursor-pointer items-start gap-3 px-3 py-3 ${
+                      already ? 'cursor-not-allowed bg-page/60 opacity-60' : 'bg-surface'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={Boolean(already)}
+                      onChange={() => toggleSelected(hit)}
+                      className="mt-1 h-4 w-4 accent-accent"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium text-fg">{hit.name}</span>
+                      <span className="block text-sm text-muted">
+                        {mediaLabel(hit.media_type)}
+                      </span>
+                      {already ? (
+                        <span className="mt-1 block text-xs text-muted">
+                          Already in your backlog
+                        </span>
+                      ) : null}
+                    </span>
+                  </label>
+                </li>
+              )
+            })}
+          </ul>
+          {error && phase === 'select' ? (
+            <p className="mb-3 text-sm text-danger" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => void handleAddSelected()}
+              disabled={selectedKeys.size === 0}
+              className="btn-primary disabled:opacity-60"
+            >
+              {selectedKeys.size === 0 ? 'Select a title to add' : addLabel}
+            </button>
+            <Link href="/add" className="btn-secondary">
+              Not quite, let me search
+            </Link>
+          </div>
+          {selectableCount === 0 ? (
+            <p className="mt-3 text-xs text-muted">
+              Every title here is already in your backlog.
+            </p>
+          ) : null}
+        </div>
+      )}
+
+      {phase === 'saving' && (
+        <div className="flex flex-col items-center gap-3 py-4">
+          <Loader2 className="h-7 w-7 animate-spin text-accent" aria-hidden />
+          <p className="text-center text-sm text-muted">Adding titles to your backlog…</p>
+        </div>
+      )}
+
+      {phase === 'success' && (
+        <div className="rounded-xl border border-border bg-surface p-6 text-center">
+          <p className="text-lg font-medium text-fg">
+            {addedCount === 1
+              ? '1 title added to your backlog'
+              : `${addedCount} titles added to your backlog`}
+          </p>
+          <p className="mt-2 text-sm text-muted">Taking you home…</p>
+        </div>
+      )}
+
       {phase === 'fallback' && (
         <div className="rounded-xl border border-border bg-surface p-4">
           <p className="mb-2 font-medium text-fg">{fallbackTitle}</p>
@@ -504,18 +717,10 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
         </div>
       )}
 
-      {phase !== 'idle' && phase !== 'loading' && (
+      {phase !== 'idle' && phase !== 'loading' && phase !== 'saving' && (
         <button
           type="button"
-          onClick={() => {
-            revokePreview()
-            setReelUrl(null)
-            setLinkDraft('')
-            setGuess(null)
-            setError(null)
-            setErrorKind(null)
-            setPhase('idle')
-          }}
+          onClick={resetToIdle}
           className="text-sm text-white transition-colors hover:brightness-110"
         >
           Start over

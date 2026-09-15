@@ -130,14 +130,18 @@ export async function POST(request: Request) {
           error:
             'No caption or spoken audio was found on this reel. Add the title manually.',
           code: 'NO_TEXT',
+          results: [],
           result: { name: null, media_type: null, confidence: 0 },
         },
         { status: 200 },
       )
     }
 
-    const result = await identifyFromText(combined)
-    return NextResponse.json({ result })
+    const results = await identifyFromText(combined)
+    return NextResponse.json({
+      results,
+      result: results[0] ?? { name: null, media_type: null, confidence: 0 },
+    })
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Reel identification failed'

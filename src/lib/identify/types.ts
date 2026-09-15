@@ -5,3 +5,9 @@ export type IdentifyResult = {
   media_type: MediaTypeGuess | null
   confidence: number
 }
+
+export type IdentifyHit = {
+  name: string
+  media_type: MediaTypeGuess
+  confidence: number
+}

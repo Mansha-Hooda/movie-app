@@ -1,5 +1,6 @@
 import { IDENTIFY_REEL_PROMPT } from '@/lib/identify/reel-prompt'
-import { emptyIdentifyResult, parseIdentifyJson } from '@/lib/identify/parse'
+import { emptyIdentifyResults, parseIdentifyJson } from '@/lib/identify/parse'
+import { IDENTIFY_TITLES_SCHEMA } from '@/lib/identify/schema'
 import type { IdentifyResult } from '@/lib/identify/types'
 import { isRetryableGeminiError } from '@/lib/identify/gemini'
 
@@ -23,22 +24,9 @@ function getApiKey(): string {
   return key
 }
 
-const JSON_SCHEMA = {
-  type: 'OBJECT',
-  properties: {
-    name: { type: 'STRING' },
-    media_type: {
-      type: 'STRING',
-      enum: ['movie', 'show', 'book'],
-    },
-    confidence: { type: 'NUMBER' },
-  },
-  required: ['name', 'media_type', 'confidence'],
-}
-
 export async function identifyTextWithGemini(
   combinedText: string,
-): Promise<IdentifyResult> {
+): Promise<IdentifyResult[]> {
   const key = getApiKey()
   const userMessage = `${IDENTIFY_REEL_PROMPT}\n\n---\nReel caption and transcript:\n${combinedText}`
 
@@ -60,7 +48,7 @@ export async function identifyTextWithGemini(
           thinkingLevel: 'minimal',
         },
         responseMimeType: 'application/json',
-        responseSchema: JSON_SCHEMA,
+        responseSchema: IDENTIFY_TITLES_SCHEMA,
       },
     }),
   })
@@ -81,19 +69,19 @@ export async function identifyTextWithGemini(
     .trim()
 
   if (!text) {
-    return emptyIdentifyResult()
+    return emptyIdentifyResults()
   }
 
   try {
     return parseIdentifyJson(text)
   } catch {
-    return emptyIdentifyResult()
+    return emptyIdentifyResults()
   }
 }
 
 export async function identifyTextWithGeminiRetrying(
   combinedText: string,
-): Promise<IdentifyResult> {
+): Promise<IdentifyResult[]> {
   try {
     return await identifyTextWithGemini(combinedText)
   } catch (firstError) {
