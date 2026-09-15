@@ -13,6 +13,8 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import type { IdentifyResult } from '@/lib/identify/types'
 import { compressImageForUpload } from '@/lib/images/compress'
+import { ReelPipelineDebugPanel } from '@/components/ReelPipelineDebugPanel'
+import type { ReelPipelineDebug } from '@/lib/reels/pipeline-debug'
 import { extractInstagramUrl } from '@/lib/reels/url'
 import { findDuplicateInList } from '@/lib/titles/api'
 import type { MediaType, Title } from '@/types/database'
@@ -106,6 +108,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
   const [errorKind, setErrorKind] = useState<
     'size' | 'identify' | 'generic' | 'reel' | null
   >(null)
+  const [reelDebug, setReelDebug] = useState<ReelPipelineDebug | null>(null)
 
   const revokePreview = useCallback(() => {
     setPreviewUrl((current) => {
@@ -140,6 +143,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
     async (file: File) => {
       revokePreview()
       setReelUrl(null)
+      setReelDebug(null)
       setError(null)
       setErrorKind(null)
       setGuess(null)
@@ -229,6 +233,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
       setError(null)
       setErrorKind(null)
       setGuess(null)
+      setReelDebug(null)
       setInputMode('reel')
       setPhase('loading')
 
@@ -239,7 +244,12 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
           body: JSON.stringify({ url }),
         })
 
-        let data: { result?: IdentifyResult; error?: string; code?: string } = {}
+        let data: {
+          result?: IdentifyResult
+          error?: string
+          code?: string
+          debug?: ReelPipelineDebug
+        } = {}
         try {
           data = (await response.json()) as typeof data
         } catch {
@@ -247,6 +257,10 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
           setErrorKind('generic')
           setPhase('fallback')
           return
+        }
+
+        if (data.debug) {
+          setReelDebug(data.debug)
         }
 
         if (!response.ok) {
@@ -426,6 +440,10 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
         </div>
       )}
 
+      {inputMode === 'reel' && reelDebug && phase === 'confirm' && (
+        <ReelPipelineDebugPanel debug={reelDebug} />
+      )}
+
       {phase === 'confirm' && guess && (
         <div className="rounded-xl border border-border bg-surface p-4">
           <p className="mb-1 text-xs uppercase tracking-wide text-accent">
@@ -472,6 +490,10 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
         </div>
       )}
 
+      {inputMode === 'reel' && reelDebug && phase === 'fallback' && (
+        <ReelPipelineDebugPanel debug={reelDebug} />
+      )}
+
       {phase === 'fallback' && (
         <div className="rounded-xl border border-border bg-surface p-4">
           <p className="mb-2 font-medium text-fg">{fallbackTitle}</p>
@@ -513,6 +535,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
             setReelUrl(null)
             setLinkDraft('')
             setGuess(null)
+            setReelDebug(null)
             setError(null)
             setErrorKind(null)
             setPhase('idle')

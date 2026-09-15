@@ -100,20 +100,35 @@ async function supadataFetch(path: string, query: Record<string, string>) {
   return response
 }
 
+export type ReelMetadataFetch = SupadataMetadata & {
+  raw: Record<string, unknown>
+}
+
+function formatSupadataError(error: unknown): string {
+  if (error instanceof SupadataError) {
+    const parts = [error.code, error.message, `HTTP ${error.status}`]
+    if (error.details) parts.push(error.details)
+    return parts.filter(Boolean).join(' — ')
+  }
+  if (error instanceof Error) return error.message
+  return String(error)
+}
+
 /** Caption / description for a public reel or post. */
-export async function fetchReelMetadata(
-  reelUrl: string,
-): Promise<SupadataMetadata> {
+export async function fetchReelMetadata(reelUrl: string): Promise<ReelMetadataFetch> {
   const response = await supadataFetch('/metadata', { url: reelUrl })
-  const data = (await response.json()) as SupadataMetadata & {
+  const data = (await response.json()) as Record<string, unknown> & {
     description?: string | null
     title?: string | null
   }
   return {
     description: data.description ?? null,
     title: data.title ?? null,
+    raw: data,
   }
 }
+
+export { formatSupadataError }
 
 function transcriptContentToString(
   content: string | TranscriptChunk[] | undefined,
@@ -165,8 +180,15 @@ async function pollTranscriptJob(jobId: string): Promise<string> {
   )
 }
 
+export type ReelTranscriptFetch = {
+  text: string
+  raw: unknown
+}
+
 /** Spoken audio transcript for a public reel (caption + speech). */
-export async function fetchReelTranscript(reelUrl: string): Promise<string> {
+export async function fetchReelTranscript(
+  reelUrl: string,
+): Promise<ReelTranscriptFetch> {
   const response = await supadataFetch('/transcript', {
     url: reelUrl,
     text: 'false',
@@ -176,10 +198,17 @@ export async function fetchReelTranscript(reelUrl: string): Promise<string> {
   const data = (await response.json()) as TranscriptResponse
 
   if (data.jobId) {
-    return pollTranscriptJob(data.jobId)
+    const text = await pollTranscriptJob(data.jobId)
+    return {
+      text,
+      raw: { initial: data, note: 'Transcript completed via async job polling' },
+    }
   }
 
-  return transcriptContentToString(data.content)
+  return {
+    text: transcriptContentToString(data.content),
+    raw: data,
+  }
 }
 
 export function isSupadataAccessError(error: unknown): boolean {
