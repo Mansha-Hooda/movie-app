@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server'
 import { identifyFromText } from '@/lib/identify'
 import { isInstagramReelUrl } from '@/lib/reels/url'
-import type { ReelPipelineDebug } from '@/lib/reels/pipeline-debug'
 import {
   SupadataError,
   fetchReelMetadata,
   fetchReelTranscript,
-  formatSupadataError,
   isSupadataAccessError,
   isSupadataConfigured,
 } from '@/lib/supadata/client'
@@ -37,35 +35,17 @@ function combineReelText(parts: {
   return sections.join('\n\n')
 }
 
-function emptyDebug(partial: Partial<ReelPipelineDebug> = {}): ReelPipelineDebug {
-  return {
-    metadataRaw: null,
-    metadataDescription: null,
-    metadataTitle: null,
-    metadataError: null,
-    transcriptJoined: null,
-    transcriptRaw: null,
-    transcriptError: null,
-    combinedForAi: '',
-    aiResult: null,
-    ...partial,
-  }
-}
-
 /**
  * POST /api/identify-reel
  * JSON body: { url: string } — public Instagram reel/post URL
  */
 export async function POST(request: Request) {
-  let debug = emptyDebug()
-
   try {
     if (!isSupadataConfigured()) {
       return NextResponse.json(
         {
           error: 'Reel identification is not configured on the server',
           code: 'SUPADATA_NOT_CONFIGURED',
-          debug,
         },
         { status: 503 },
       )
@@ -75,12 +55,12 @@ export async function POST(request: Request) {
     try {
       body = (await request.json()) as IdentifyReelBody
     } catch {
-      return NextResponse.json({ error: 'Invalid JSON body', debug }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
     }
 
     const url = body.url?.trim()
     if (!url) {
-      return NextResponse.json({ error: 'Missing url', debug }, { status: 400 })
+      return NextResponse.json({ error: 'Missing url' }, { status: 400 })
     }
 
     if (!isInstagramReelUrl(url)) {
@@ -88,7 +68,6 @@ export async function POST(request: Request) {
         {
           error: 'Please share a public Instagram reel or post link',
           code: 'INVALID_URL',
-          debug,
         },
         { status: 400 },
       )
@@ -109,20 +88,9 @@ export async function POST(request: Request) {
     if (metadataResult.status === 'fulfilled') {
       caption = metadataResult.value.description ?? null
       title = metadataResult.value.title ?? null
-      debug = {
-        ...debug,
-        metadataRaw: metadataResult.value.raw,
-        metadataDescription: metadataResult.value.description ?? null,
-        metadataTitle: metadataResult.value.title ?? null,
-        metadataError: null,
-      }
     } else {
       metadataFailed = true
       const err = metadataResult.reason
-      debug = {
-        ...debug,
-        metadataError: formatSupadataError(err),
-      }
       if (isSupadataAccessError(err)) {
         accessBlocked = true
       }
@@ -130,20 +98,10 @@ export async function POST(request: Request) {
     }
 
     if (transcriptResult.status === 'fulfilled') {
-      transcript = transcriptResult.value.text || null
-      debug = {
-        ...debug,
-        transcriptJoined: transcriptResult.value.text || null,
-        transcriptRaw: transcriptResult.value.raw,
-        transcriptError: null,
-      }
+      transcript = transcriptResult.value || null
     } else {
       transcriptFailed = true
       const err = transcriptResult.reason
-      debug = {
-        ...debug,
-        transcriptError: formatSupadataError(err),
-      }
       if (isSupadataAccessError(err)) {
         accessBlocked = true
       }
@@ -154,7 +112,6 @@ export async function POST(request: Request) {
     }
 
     const combined = combineReelText({ caption, title, transcript })
-    debug = { ...debug, combinedForAi: combined }
 
     if (!combined) {
       if (accessBlocked && metadataFailed && transcriptFailed) {
@@ -163,7 +120,6 @@ export async function POST(request: Request) {
             error:
               'This reel is private or Supadata cannot access it. Try a public reel link.',
             code: 'REEL_INACCESSIBLE',
-            debug,
           },
           { status: 422 },
         )
@@ -175,15 +131,13 @@ export async function POST(request: Request) {
             'No caption or spoken audio was found on this reel. Add the title manually.',
           code: 'NO_TEXT',
           result: { name: null, media_type: null, confidence: 0 },
-          debug,
         },
         { status: 200 },
       )
     }
 
     const result = await identifyFromText(combined)
-    debug = { ...debug, aiResult: result }
-    return NextResponse.json({ result, debug })
+    return NextResponse.json({ result })
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Reel identification failed'
@@ -196,16 +150,12 @@ export async function POST(request: Request) {
             error:
               'This reel is private or Supadata cannot access it. Try a public reel link.',
             code: 'REEL_INACCESSIBLE',
-            debug,
           },
           { status: 422 },
         )
       }
     }
 
-    return NextResponse.json(
-      { error: message, code: 'IDENTIFY_FAILED', debug },
-      { status: 502 },
-    )
+    return NextResponse.json({ error: message, code: 'IDENTIFY_FAILED' }, { status: 502 })
   }
 }
