@@ -30,14 +30,14 @@ export function UndoWatchedToast({ undo, onUndo, onDismiss }: UndoToastProps) {
         <button
           type="button"
           onClick={onUndo}
-          className="rounded-full bg-accent px-3 py-1 text-sm text-ink transition duration-150 hover:brightness-110 active:scale-95"
+          className="btn-primary px-3 py-1.5"
         >
           Undo
         </button>
         <button
           type="button"
           onClick={onDismiss}
-          className="text-sm text-muted"
+          className="text-sm text-white/80 transition-colors hover:text-white"
           aria-label="Dismiss"
         >
           ×

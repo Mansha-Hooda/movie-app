@@ -516,7 +516,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
             setErrorKind(null)
             setPhase('idle')
           }}
-          className="text-sm text-accent transition-colors hover:brightness-110"
+          className="text-sm text-white transition-colors hover:brightness-110"
         >
           Start over
         </button>

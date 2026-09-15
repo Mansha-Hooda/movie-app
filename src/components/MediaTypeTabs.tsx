@@ -32,7 +32,7 @@ export function MediaTypeTabs({ value, onChange }: MediaTypeTabsProps) {
             aria-selected={selected}
             onClick={() => onChange(selected ? 'all' : tab.value)}
             className={`flex-1 rounded-xl py-2.5 text-sm transition duration-150 ${
-              selected ? 'bg-white font-medium text-ink' : 'text-muted'
+              selected ? 'bg-white font-medium text-ink' : 'text-white/70'
             }`}
           >
             {tab.label}

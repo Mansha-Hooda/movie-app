@@ -51,7 +51,7 @@ export function AppHeader({ email }: AppHeaderProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-muted transition-colors duration-200 hover:border-accent hover:text-accent active:scale-95"
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-surface text-white transition-colors duration-200 hover:border-fg/35 active:scale-95 [&_svg]:text-white"
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label="Account menu"

@@ -16,7 +16,7 @@ export function AddTitleLink({ variant = 'fab' }: AddTitleLinkProps) {
   return (
     <Link
       href="/add"
-      className="fixed bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-2xl text-ink shadow-md transition duration-150 hover:brightness-110 active:scale-95"
+      className="fixed bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-xl bg-accent text-2xl font-medium text-white shadow-md transition duration-150 hover:brightness-110 active:scale-95"
       aria-label="Add title"
     >
       +

@@ -44,7 +44,7 @@ export function LoginForm() {
         <button
           type="button"
           onClick={() => setStep('email')}
-          className="mt-4 text-sm text-accent transition-colors hover:brightness-110"
+          className="mt-4 text-sm text-white transition-colors hover:brightness-110"
         >
           Use a different email
         </button>

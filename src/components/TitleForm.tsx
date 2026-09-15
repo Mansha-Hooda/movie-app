@@ -309,10 +309,10 @@ export function TitleForm({
     enrichment.synopsis
 
   const selectChip = (selected: boolean) =>
-    `rounded-full border px-4 py-2 text-sm transition duration-150 active:scale-95 ${
+    `rounded-xl border px-4 py-2 text-sm transition duration-150 active:scale-95 ${
       selected
         ? 'border-white bg-white text-ink'
-        : 'border-fg/50 bg-transparent text-fg'
+        : 'border-fg/50 bg-transparent text-white'
     }`
 
   return (
@@ -328,7 +328,7 @@ export function TitleForm({
                 type="button"
                 onClick={() => setMediaType(option.value)}
                 className={`flex-1 rounded-xl py-2.5 text-sm transition duration-150 ${
-                  selected ? 'bg-white font-medium text-ink' : 'text-muted'
+                  selected ? 'bg-white font-medium text-ink' : 'text-white/70'
                 }`}
               >
                 {typeLabel(option.value)}
