@@ -1,5 +1,7 @@
 import { identifyWithGemini } from '@/lib/identify/gemini'
+import { identifyTextWithGeminiRetrying } from '@/lib/identify/gemini-text'
 import { identifyWithGroq, isGroqConfigured } from '@/lib/identify/groq'
+import { identifyTextWithGroq } from '@/lib/identify/groq-text'
 import type { IdentifyResult } from '@/lib/identify/types'
 
 export type { IdentifyResult }
@@ -100,6 +102,33 @@ export async function identifyScreenshot(
     providers.push({
       source: 'groq',
       run: () => identifyWithGroq(imageBase64, mimeType),
+    })
+  }
+
+  return raceFirstValid(providers)
+}
+
+/**
+ * Identify a title from reel caption + transcript text.
+ * Fires Gemini and Groq (when configured) in parallel; first valid result wins.
+ */
+export async function identifyFromText(combinedText: string): Promise<IdentifyResult> {
+  const text = combinedText.trim()
+  if (!text) {
+    return { name: null, media_type: null, confidence: 0 }
+  }
+
+  const providers: { source: string; run: () => Promise<IdentifyResult> }[] = [
+    {
+      source: 'gemini',
+      run: () => identifyTextWithGeminiRetrying(text),
+    },
+  ]
+
+  if (isGroqConfigured()) {
+    providers.push({
+      source: 'groq',
+      run: () => identifyTextWithGroq(text),
     })
   }
 

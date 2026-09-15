@@ -4,6 +4,7 @@ const CACHE_VERSION = new URL(self.location.href).searchParams.get('v') || 'dev'
 const STATIC_CACHE = `backlog-static-${CACHE_VERSION}`
 const SHARE_CACHE = 'share-target-v1'
 const SHARE_IMAGE_KEY = 'shared-image'
+const SHARE_LINK_KEY = 'shared-link'
 
 const PRECACHE_URLS = ['/manifest.json', '/splash.png', '/logo-mark.png', '/icon.png']
 
@@ -41,6 +42,35 @@ self.addEventListener('activate', (event) => {
  * Android share_target POSTs the image here. Cache it, then redirect to the
  * GET /share-handler page so the client can read the file and call Gemini.
  */
+const INSTAGRAM_URL =
+  /https?:\/\/(?:www\.)?instagram\.com\/(?:reel|p|tv)\/[\w-]+(?:\/)?/i
+
+function extractInstagramUrl(raw) {
+  if (!raw || typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  const match = trimmed.match(INSTAGRAM_URL)
+  if (match) return match[0].replace(/\/$/, '')
+  try {
+    const asUrl = new URL(trimmed)
+    if (/instagram\.com$/i.test(asUrl.hostname.replace(/^www\./, ''))) {
+      if (/^\/(reel|p|tv)\//.test(asUrl.pathname)) {
+        return `${asUrl.origin}${asUrl.pathname}`.replace(/\/$/, '')
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return null
+}
+
+function resolveSharedInstagramUrl(urlField, textField, titleField) {
+  for (const candidate of [urlField, textField, titleField]) {
+    const found = extractInstagramUrl(candidate)
+    if (found) return found
+  }
+  return null
+}
+
 async function handleShareTarget(request) {
   try {
     const formData = await request.formData()
@@ -50,8 +80,9 @@ async function handleShareTarget(request) {
       formData.get('media') ||
       [...formData.values()].find((value) => value instanceof Blob && value.size > 0)
 
+    const cache = await caches.open(SHARE_CACHE)
+
     if (file instanceof Blob && file.size > 0) {
-      const cache = await caches.open(SHARE_CACHE)
       const headers = new Headers({
         'Content-Type': file.type || 'application/octet-stream',
       })
@@ -59,6 +90,22 @@ async function handleShareTarget(request) {
         headers.set('X-Filename', file.name)
       }
       await cache.put(SHARE_IMAGE_KEY, new Response(file, { headers }))
+      await cache.delete(SHARE_LINK_KEY)
+    } else {
+      const sharedUrl = resolveSharedInstagramUrl(
+        formData.get('url'),
+        formData.get('text'),
+        formData.get('title'),
+      )
+      if (sharedUrl) {
+        await cache.put(
+          SHARE_LINK_KEY,
+          new Response(JSON.stringify({ url: sharedUrl }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+        await cache.delete(SHARE_IMAGE_KEY)
+      }
     }
   } catch (error) {
     console.error('[sw] share_target failed', error)

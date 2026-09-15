@@ -19,7 +19,7 @@ export default async function ShareHandlerPage() {
   return (
     <main className="mx-auto max-w-md px-5 pb-12 pt-6">
       <AppHeader email={user.email ?? ''} />
-      <h1 className="mb-6 text-xl font-medium text-fg">From screenshot</h1>
+      <h1 className="mb-6 text-xl font-medium text-fg">From share</h1>
       <ShareHandlerClient existingTitles={titles ?? []} />
     </main>
   )
