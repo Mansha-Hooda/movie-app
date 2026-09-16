@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { identifyWithGemini } from '@/lib/identify/gemini'
 import { identifyTextWithGeminiRetrying } from '@/lib/identify/gemini-text'
 import { identifyWithGroq, isGroqConfigured } from '@/lib/identify/groq'

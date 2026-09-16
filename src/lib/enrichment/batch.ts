@@ -1,3 +1,5 @@
+import 'server-only'
+
 import { enrichTitle, searchTitles } from '@/lib/enrichment/providers'
 import type { EnrichmentData, SearchResult } from '@/lib/enrichment/types'
 import { moodsFromGenre } from '@/lib/genre-mood-map'

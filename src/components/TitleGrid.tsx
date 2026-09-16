@@ -1,11 +1,14 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { AnimatePresence, LayoutGroup } from 'framer-motion'
 import { TitleCard } from '@/components/TitleCard'
-import { TitleDetail } from '@/components/TitleDetail'
 import type { Title } from '@/types/database'
+
+const TitleDetail = dynamic(() => import('@/components/TitleDetail'), {
+  ssr: false,
+})
 
 type TitleGridProps = {
   titles: Title[]
@@ -78,7 +81,7 @@ export function TitleGrid({
     : null
 
   return (
-    <LayoutGroup>
+    <>
       <div className="grid grid-cols-2 gap-x-3 gap-y-6">
         {titles.map((title) => (
           <TitleCard
@@ -90,15 +93,13 @@ export function TitleGrid({
         ))}
       </div>
 
-      <AnimatePresence>
-        {selectedTitle && (
-          <TitleDetail
-            title={selectedTitle}
-            onClose={closeDetail}
-            onUpdate={onTitleUpdate}
-          />
-        )}
-      </AnimatePresence>
-    </LayoutGroup>
+      {selectedTitle ? (
+        <TitleDetail
+          title={selectedTitle}
+          onClose={closeDetail}
+          onUpdate={onTitleUpdate}
+        />
+      ) : null}
+    </>
   )
 }

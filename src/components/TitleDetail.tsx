@@ -192,3 +192,5 @@ export function TitleDetail({ title, onClose, onUpdate }: TitleDetailProps) {
     </motion.div>
   )
 }
+
+export default TitleDetail

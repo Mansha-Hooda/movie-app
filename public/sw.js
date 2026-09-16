@@ -138,32 +138,31 @@ function isStaticAsset(url) {
   )
 }
 
-/** Network-first: always try network for HTML shells; fall back to cache offline. */
-async function networkFirst(request) {
-  const cache = await caches.open(STATIC_CACHE)
-  try {
-    const fresh = await fetch(request)
-    if (fresh && fresh.ok) {
-      cache.put(request, fresh.clone())
-    }
-    return fresh
-  } catch {
-    const cached = await cache.match(request)
-    if (cached) return cached
-    const fallback = await cache.match('/')
-    if (fallback) return fallback
-    return new Response('Offline', { status: 503, statusText: 'Offline' })
-  }
-}
-
-/** Stale-while-revalidate: return cache quickly, refresh in background. */
-async function staleWhileRevalidate(request) {
+/** Stale-while-revalidate: return cache immediately, refresh in the background. */
+async function staleWhileRevalidate(request, { notifyOnHtmlChange = false } = {}) {
   const cache = await caches.open(STATIC_CACHE)
   const cached = await cache.match(request)
 
   const networkPromise = fetch(request)
-    .then((response) => {
+    .then(async (response) => {
       if (response && response.ok) {
+        if (notifyOnHtmlChange && cached) {
+          try {
+            const [cachedText, freshText] = await Promise.all([
+              cached.clone().text(),
+              response.clone().text(),
+            ])
+            const cachedBuild = buildFingerprint(cachedText)
+            const freshBuild = buildFingerprint(freshText)
+            if (cachedBuild !== freshBuild) {
+              await notifyClients({ type: 'NAV_UPDATED', reason: 'build' })
+            } else if (cachedText !== freshText) {
+              await notifyClients({ type: 'NAV_UPDATED', reason: 'content' })
+            }
+          } catch {
+            // Comparison is best-effort — still cache the fresh response.
+          }
+        }
         cache.put(request, response.clone())
       }
       return response
@@ -177,7 +176,24 @@ async function staleWhileRevalidate(request) {
 
   const fresh = await networkPromise
   if (fresh) return fresh
+  if (notifyOnHtmlChange) {
+    const home = await cache.match('/')
+    if (home) return home
+  }
   return new Response('Offline', { status: 503, statusText: 'Offline' })
+}
+
+function buildFingerprint(html) {
+  const assets = [...html.matchAll(/\/_next\/static\/[^"' )\s]+/g)].map((match) => match[0])
+  assets.sort()
+  return assets.join('|')
+}
+
+async function notifyClients(message) {
+  const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  for (const client of windows) {
+    client.postMessage(message)
+  }
 }
 
 self.addEventListener('fetch', (event) => {
@@ -200,7 +216,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isNavigationRequest(request)) {
-    event.respondWith(networkFirst(request))
+    if (url.pathname.startsWith('/auth/')) {
+      return
+    }
+    event.respondWith(staleWhileRevalidate(request, { notifyOnHtmlChange: true }))
     return
   }
 

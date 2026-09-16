@@ -1,6 +1,3 @@
-'use client'
-
-import { motion } from 'framer-motion'
 import type { Title } from '@/types/database'
 
 type PosterImageProps = {
@@ -9,13 +6,9 @@ type PosterImageProps = {
   className?: string
 }
 
-export function PosterImage({ title, layoutId, className = '' }: PosterImageProps) {
+export function PosterImage({ title, className = '' }: PosterImageProps) {
   return (
-    <motion.div
-      layoutId={layoutId}
-      className={`overflow-hidden rounded-xl bg-surface ${className}`}
-      transition={{ type: 'spring', stiffness: 360, damping: 34 }}
-    >
+    <div className={`overflow-hidden rounded-xl bg-surface ${className}`}>
       {title.poster_url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -32,6 +25,6 @@ export function PosterImage({ title, layoutId, className = '' }: PosterImageProp
           }}
         />
       )}
-    </motion.div>
+    </div>
   )
 }

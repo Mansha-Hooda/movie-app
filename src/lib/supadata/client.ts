@@ -1,3 +1,5 @@
+import 'server-only'
+
 const SUPADATA_BASE = 'https://api.supadata.ai/v1'
 
 export type SupadataErrorCode =

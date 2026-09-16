@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
     // Inlined into the client bundle so PwaRegister can bust SW cache per deploy
     NEXT_PUBLIC_SW_CACHE_VERSION: buildId,
   },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
+  },
   async headers() {
     return [
       {

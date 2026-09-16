@@ -1,14 +1,22 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 const BUILD_ID =
   process.env.NEXT_PUBLIC_SW_CACHE_VERSION ||
   process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ||
   'dev'
 
-/** Registers the service worker and keeps it updated across deploys. */
+type NavUpdatedMessage = {
+  type?: string
+  reason?: 'build' | 'content'
+}
+
+/** Registers the service worker and applies background cache updates. */
 export function PwaRegister() {
+  const router = useRouter()
+
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
 
@@ -22,19 +30,31 @@ export function PwaRegister() {
       window.location.reload()
     }
 
+    function onWorkerMessage(event: MessageEvent<NavUpdatedMessage>) {
+      if (event.data?.type !== 'NAV_UPDATED') return
+      if (event.data.reason === 'build') {
+        if (refreshing) return
+        refreshing = true
+        window.location.reload()
+        return
+      }
+      if (event.data.reason === 'content') {
+        router.refresh()
+      }
+    }
+
     navigator.serviceWorker.addEventListener('controllerchange', onControllerChange)
+    navigator.serviceWorker.addEventListener('message', onWorkerMessage)
 
     async function register() {
       try {
         const registration = await navigator.serviceWorker.register(
           `/sw.js?v=${encodeURIComponent(BUILD_ID)}`,
           {
-            // Always revalidate sw.js from the network on update checks
             updateViaCache: 'none',
           },
         )
 
-        // If a new worker is already waiting, activate it immediately
         if (registration.waiting) {
           registration.waiting.postMessage({ type: 'SKIP_WAITING' })
         }
@@ -49,7 +69,6 @@ export function PwaRegister() {
           })
         })
 
-        // Check for updates when the tab becomes visible again
         const onVisibility = () => {
           if (document.visibilityState === 'visible') {
             void registration.update()
@@ -57,7 +76,6 @@ export function PwaRegister() {
         }
         document.addEventListener('visibilitychange', onVisibility)
 
-        // Periodic update check while the app stays open
         const intervalId = window.setInterval(() => {
           void registration.update()
         }, 60_000)
@@ -75,9 +93,10 @@ export function PwaRegister() {
 
     return () => {
       navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange)
+      navigator.serviceWorker.removeEventListener('message', onWorkerMessage)
       void cleanupPromise.then((cleanup) => cleanup?.())
     }
-  }, [])
+  }, [router])
 
   return null
 }

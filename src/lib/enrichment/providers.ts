@@ -1,3 +1,5 @@
+import 'server-only'
+
 import type { MediaType } from '@/types/database'
 import type { EnrichmentData, SearchResult } from '@/lib/enrichment/types'
 
