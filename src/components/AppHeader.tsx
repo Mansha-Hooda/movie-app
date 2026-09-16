@@ -41,7 +41,7 @@ export function AppHeader({ email }: AppHeaderProps) {
   }
 
   return (
-    <header className="relative mb-6 flex items-center justify-between">
+    <header data-app-header className="relative mb-6 flex items-center justify-between">
       <Link href="/" className="flex items-center gap-2.5 text-lg font-medium tracking-tight text-fg">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/icon.png" alt="" className="h-8 w-8 rounded-[0.55rem]" />

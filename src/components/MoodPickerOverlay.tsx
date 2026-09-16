@@ -1,9 +1,16 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion, type PanInfo } from 'framer-motion'
+import Link from 'next/link'
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useTransform,
+  type PanInfo,
+} from 'framer-motion'
 import { moodLabel } from '@/lib/titles/moods'
-import type { MoodCardData } from '@/lib/moods/picker'
+import { hashMoodName, hexToRgba, type MoodCardData } from '@/lib/moods/picker'
 
 type MoodPickerOverlayProps = {
   cards: MoodCardData[]
@@ -11,34 +18,46 @@ type MoodPickerOverlayProps = {
   onDismiss: () => void
 }
 
-const SWIPE_OFFSET = 110
-const SWIPE_VELOCITY = 650
+const SWIPE_OFFSET = 88
+const SWIPE_VELOCITY = 520
+const SPRING = { type: 'spring' as const, stiffness: 340, damping: 30, mass: 0.75 }
+const EXIT_SPRING = { type: 'spring' as const, stiffness: 240, damping: 24, mass: 0.85 }
+
+const POSTER_FAN = [
+  { z: 1, rotate: -16, x: -36 },
+  { z: 3, rotate: 0, x: 0 },
+  { z: 2, rotate: 14, x: 36 },
+] as const
+
+function peekPose(mood: string, layer: number) {
+  const hash = hashMoodName(mood)
+  const dir = layer % 2 === 0 ? -1 : 1
+  return {
+    rotate: dir * (12 + (hash % 11)),
+    x: dir * (34 + (hash % 16)),
+    y: 16 + ((hash >> 4) % 14),
+    scale: 0.93 - layer * 0.03,
+  }
+}
 
 function PosterFan({ posters }: { posters: (string | null)[] }) {
-  const slots = [posters[0] ?? null, posters[1] ?? null, posters[2] ?? null]
-  const layout = [
-    { z: 1, rotate: -14, x: '-28%', y: 10, scale: 0.88 },
-    { z: 3, rotate: 0, x: '0%', y: 0, scale: 1 },
-    { z: 2, rotate: 13, x: '28%', y: 12, scale: 0.88 },
-  ]
-
   return (
-    <div className="relative mx-auto mt-6 h-52 w-[78%]">
-      {layout.map((style, index) => (
+    <div className="relative mx-auto h-[9.25rem] w-[11.25rem]">
+      {POSTER_FAN.map((style, index) => (
         <div
           key={index}
-          className="absolute top-0 left-1/2 h-full w-[42%] origin-bottom overflow-hidden rounded-xl border border-white/25 shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
+          className="absolute top-1/2 left-1/2 h-[8.1rem] w-[5.4rem] overflow-hidden rounded-2xl border border-white/20 shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
           style={{
             zIndex: style.z,
-            transform: `translateX(-50%) translateX(${style.x}) translateY(${style.y}px) rotate(${style.rotate}deg) scale(${style.scale})`,
+            transform: `translate(-50%, -50%) translateX(${style.x}px) rotate(${style.rotate}deg)`,
             background:
-              'linear-gradient(160deg, #2a2633 0%, #1c1a20 45%, #332f3d 100%)',
+              'linear-gradient(160deg, #3a3644 0%, #2a2633 50%, #1c1a20 100%)',
           }}
         >
-          {slots[index] ? (
+          {posters[index] ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={slots[index] ?? ''}
+              src={posters[index] ?? ''}
               alt=""
               draggable={false}
               className="h-full w-full object-cover"
@@ -50,33 +69,37 @@ function PosterFan({ posters }: { posters: (string | null)[] }) {
   )
 }
 
+function glassStyle(card: MoodCardData, peek: boolean) {
+  const strength = peek ? 0.34 : 0.42
+  return {
+    background: `linear-gradient(160deg, ${hexToRgba(card.gradient.from, strength + 0.1)} 0%, ${hexToRgba(card.gradient.via, strength)} 48%, ${hexToRgba(card.gradient.to, 0.36)} 100%)`,
+    backdropFilter: 'blur(28px) saturate(1.4)',
+    WebkitBackdropFilter: 'blur(28px) saturate(1.4)',
+  }
+}
+
 function GlassCard({
   card,
-  peek,
+  peek = false,
 }: {
   card: MoodCardData
   peek?: boolean
 }) {
   return (
     <div
-      className="h-full w-full overflow-hidden rounded-[28px] border border-white/25 shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
-      style={{
-        background: `linear-gradient(165deg, ${card.gradient.from} 0%, ${card.gradient.via} 42%, ${card.gradient.to} 100%)`,
-        opacity: peek ? 0.95 : 1,
-      }}
+      className="h-full w-full overflow-hidden rounded-[26px] border border-white/18 shadow-[0_18px_44px_rgba(0,0,0,0.38)]"
+      style={glassStyle(card, peek)}
     >
-      <div
-        className="h-full w-full px-6 pt-7 pb-8"
-        style={{
-          background:
-            'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 38%, rgba(0,0,0,0.18) 100%)',
-        }}
-      >
-        <h3 className="text-center text-[1.65rem] font-semibold tracking-tight text-white drop-shadow-sm">
-          {moodLabel(card.mood)}
-        </h3>
-        <PosterFan posters={card.posters} />
-      </div>
+      {peek ? null : (
+        <div className="flex h-full flex-col px-5 pt-6 pb-5">
+          <h3 className="text-center text-[1.3rem] font-bold tracking-tight text-white">
+            {moodLabel(card.mood)}
+          </h3>
+          <div className="flex flex-1 items-center justify-center">
+            <PosterFan posters={card.posters} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -87,20 +110,32 @@ export function MoodPickerOverlay({
   onDismiss,
 }: MoodPickerOverlayProps) {
   const [index, setIndex] = useState(0)
-  const [exitX, setExitX] = useState(0)
+  const x = useMotionValue(0)
+  const rotate = useTransform(x, [-240, 0, 240], [-14, 0, 14])
+  const nearestScale = useTransform(x, [-200, 0, 200], [0.98, 0.93, 0.98])
+  const nearestY = useTransform(x, [-200, 0, 200], [8, 16, 8])
   const dragDistance = useRef(0)
+  const swiping = useRef(false)
 
   useEffect(() => {
-    const previous = document.body.style.overflow
+    const previousOverflow = document.body.style.overflow
+    document.body.classList.add('mood-picker-open')
     document.body.style.overflow = 'hidden'
     return () => {
-      document.body.style.overflow = previous
+      document.body.classList.remove('mood-picker-open')
+      document.body.style.overflow = previousOverflow
     }
   }, [])
 
+  useEffect(() => {
+    x.set(0)
+    swiping.current = false
+  }, [index, x])
+
   const remaining = cards.slice(index)
   const front = remaining[0]
-  const behind = remaining.slice(1, 3)
+  const firstBehind = remaining[1]
+  const secondBehind = remaining[2]
 
   function advance() {
     const next = index + 1
@@ -109,90 +144,112 @@ export function MoodPickerOverlay({
       return
     }
     setIndex(next)
-    setExitX(0)
   }
 
-  function handleDragEnd(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
+  async function handleDragEnd(
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo,
+  ) {
     const shouldSwipe =
-      Math.abs(info.offset.x) > SWIPE_OFFSET || Math.abs(info.velocity.x) > SWIPE_VELOCITY
+      Math.abs(info.offset.x) > SWIPE_OFFSET ||
+      Math.abs(info.velocity.x) > SWIPE_VELOCITY
 
-    if (shouldSwipe) {
-      setExitX(info.offset.x > 0 ? 480 : -480)
+    if (!shouldSwipe) {
+      void animate(x, 0, SPRING)
+      return
     }
+
+    swiping.current = true
+    const direction = info.offset.x + info.velocity.x > 0 ? 1 : -1
+    await animate(x, direction * 560, {
+      ...EXIT_SPRING,
+      velocity: info.velocity.x,
+    })
+    advance()
   }
 
   if (!front) {
     return null
   }
 
-  return (
-    <div className="fixed inset-0 z-[80] flex flex-col px-6 pt-[max(3.5rem,env(safe-area-inset-top))] pb-10">
-      <div className="absolute inset-0 bg-black/70" aria-hidden />
+  const secondPose = secondBehind ? peekPose(secondBehind.mood, 1) : null
+  const firstPose = firstBehind ? peekPose(firstBehind.mood, 0) : null
 
-      <div className="relative z-10 mx-auto w-full max-w-sm flex-1">
-        <h2 className="mb-8 max-w-[16rem] text-[1.65rem] font-semibold leading-tight tracking-tight text-white">
+  return (
+    <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-black px-8">
+      <div className="flex w-full max-w-[18.5rem] flex-col items-center">
+        <h2 className="mb-8 w-full text-center text-[1.85rem] font-bold leading-[1.2] tracking-tight text-white">
           Welcome back, what&apos;s your mood for today?
         </h2>
 
-        <div className="relative mx-auto h-[26.5rem] w-full max-w-[19.5rem]">
-          {behind
-            .map((card, behindIndex) => {
-              const depth = behindIndex + 1
-              return (
-                <div
-                  key={card.mood}
-                  className="absolute inset-0"
-                  style={{
-                    transform: `translateY(${depth * 14}px) scale(${1 - depth * 0.045})`,
-                    zIndex: 2 - behindIndex,
-                  }}
-                >
-                  <GlassCard card={card} peek />
-                </div>
-              )
-            })
-            .reverse()}
-
-          <AnimatePresence mode="wait">
-            <motion.button
-              key={front.mood}
-              type="button"
-              className="absolute inset-0 z-10 cursor-grab touch-none appearance-none border-0 bg-transparent p-0 text-left active:cursor-grabbing"
-              style={{ touchAction: 'none' }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.85}
-              onDragStart={() => {
-                dragDistance.current = 0
-              }}
-              onDrag={(_, info) => {
-                dragDistance.current = info.offset.x
-              }}
-              onDragEnd={handleDragEnd}
-              onTap={() => {
-                if (Math.abs(dragDistance.current) < 10) {
-                  onSelect(front.mood)
-                }
-              }}
-              initial={{ scale: 0.96, opacity: 0.8 }}
-              animate={{
-                x: exitX,
-                rotate: exitX === 0 ? 0 : exitX > 0 ? 18 : -18,
-                opacity: exitX === 0 ? 1 : 0,
-                scale: 1,
-              }}
-              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-              onAnimationComplete={() => {
-                if (exitX !== 0) {
-                  advance()
-                }
-              }}
-              aria-label={`Choose mood ${moodLabel(front.mood)}`}
+        <div className="relative mb-8 h-[19.5rem] w-[15.25rem]">
+          {secondBehind && secondPose ? (
+            <motion.div
+              key={secondBehind.mood}
+              className="absolute inset-0"
+              style={{ zIndex: 1 }}
+              initial={false}
+              animate={secondPose}
+              transition={SPRING}
             >
-              <GlassCard card={front} />
-            </motion.button>
-          </AnimatePresence>
+              <GlassCard card={secondBehind} peek />
+            </motion.div>
+          ) : null}
+
+          {firstBehind && firstPose ? (
+            <motion.div
+              key={firstBehind.mood}
+              className="absolute inset-0"
+              style={{
+                zIndex: 2,
+                rotate: firstPose.rotate,
+                x: firstPose.x,
+                scale: nearestScale,
+                y: nearestY,
+              }}
+            >
+              <GlassCard card={firstBehind} peek />
+            </motion.div>
+          ) : null}
+
+          <motion.button
+            key={front.mood}
+            type="button"
+            className="absolute inset-0 z-10 cursor-grab touch-none appearance-none border-0 bg-transparent p-0 text-left active:cursor-grabbing"
+            style={{ x, rotate, touchAction: 'none' }}
+            drag="x"
+            dragElastic={0.22}
+            dragMomentum={false}
+            dragConstraints={{ left: -260, right: 260 }}
+            dragTransition={{ bounceStiffness: 380, bounceDamping: 30 }}
+            onDragStart={() => {
+              dragDistance.current = 0
+            }}
+            onDrag={(_, info) => {
+              dragDistance.current = info.offset.x
+            }}
+            onDragEnd={handleDragEnd}
+            onTap={() => {
+              if (swiping.current) return
+              if (Math.abs(dragDistance.current) < 12) {
+                onSelect(front.mood)
+              }
+            }}
+            initial={{ scale: 0.94, y: 22, opacity: 0.88 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            transition={SPRING}
+            aria-label={`Choose mood ${moodLabel(front.mood)}`}
+          >
+            <GlassCard card={front} />
+          </motion.button>
         </div>
+
+        <Link
+          href="/backlog"
+          className="inline-flex min-w-[13.5rem] items-center justify-center rounded-full bg-accent px-8 py-3 text-sm font-semibold text-white transition duration-150 hover:brightness-110 active:scale-95"
+        >
+          View Full Backlog
+        </Link>
       </div>
     </div>
   )

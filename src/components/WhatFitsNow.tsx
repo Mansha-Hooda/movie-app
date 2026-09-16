@@ -90,29 +90,31 @@ export function WhatFitsNow({ userId, initialTitles }: WhatFitsNowProps) {
           }}
           onDismiss={() => setPickerOpen(false)}
         />
-      ) : null}
+      ) : (
+        <>
+          <MoodCarousel moods={moodOptions} value={mood} onChange={setMood} />
 
-      <MoodCarousel moods={moodOptions} value={mood} onChange={setMood} />
+          <WatchedProgress watchedCount={moodWatched} totalCount={moodTotal} />
 
-      <WatchedProgress watchedCount={moodWatched} totalCount={moodTotal} />
+          <div className="mb-8">
+            <MediaTypeTabs value={mediaType} onChange={setMediaType} />
+          </div>
 
-      <div className="mb-8">
-        <MediaTypeTabs value={mediaType} onChange={setMediaType} />
-      </div>
+          <TitleGrid
+            titles={filtered}
+            emptyMessage={emptyMessage}
+            emptyAction={
+              filtersActive
+                ? null
+                : { href: '/add', label: 'Add your first title' }
+            }
+            onTitleUpdate={handleTitleUpdate}
+            onTitleDelete={handleTitleDelete}
+          />
 
-      <TitleGrid
-        titles={filtered}
-        emptyMessage={emptyMessage}
-        emptyAction={
-          filtersActive
-            ? null
-            : { href: '/add', label: 'Add your first title' }
-        }
-        onTitleUpdate={handleTitleUpdate}
-        onTitleDelete={handleTitleDelete}
-      />
-
-      <UndoWatchedToast undo={undo} onUndo={undoAction} onDismiss={dismissUndo} />
+          <UndoWatchedToast undo={undo} onUndo={undoAction} onDismiss={dismissUndo} />
+        </>
+      )}
     </div>
   )
 }
