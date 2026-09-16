@@ -6,25 +6,19 @@ export type MoodCardData = {
   color: string
 }
 
-/** Dark-theme purples and indigos around the primary accent. */
+/** Distinct hues that still read on the dark theme; assigned uniquely per mood. */
 const MOOD_COLORS = [
   '#6C00F8',
+  '#0D9488',
+  '#2563EB',
+  '#E11D48',
+  '#CA8A04',
+  '#16A34A',
+  '#DB2777',
+  '#EA580C',
+  '#0891B2',
   '#7C3AED',
-  '#4F46E5',
-  '#5B21B6',
-  '#3730A3',
-  '#6D28D9',
-  '#4338CA',
-  '#0F766E',
 ]
-
-export function hashMoodName(mood: string): number {
-  let hash = 0
-  for (let i = 0; i < mood.length; i += 1) {
-    hash = (hash * 33 + mood.charCodeAt(i)) >>> 0
-  }
-  return hash
-}
 
 export function hexToRgba(hex: string, alpha: number): string {
   const normalized = hex.replace('#', '')
@@ -35,8 +29,8 @@ export function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-export function colorForMood(mood: string): string {
-  return MOOD_COLORS[hashMoodName(mood) % MOOD_COLORS.length]
+function colorForIndex(index: number): string {
+  return MOOD_COLORS[index % MOOD_COLORS.length]
 }
 
 /**
@@ -74,10 +68,13 @@ export function collectMoodCards(titles: Title[]): MoodCardData[] {
     cards.push({
       mood,
       posters: unique.map((title) => title.poster_url),
-      color: colorForMood(mood),
+      color: '',
     })
   }
 
   cards.sort((a, b) => a.mood.localeCompare(b.mood))
-  return cards
+  return cards.map((card, index) => ({
+    ...card,
+    color: colorForIndex(index),
+  }))
 }

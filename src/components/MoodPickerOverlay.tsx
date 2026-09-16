@@ -20,18 +20,20 @@ type MoodPickerOverlayProps = {
 
 const SWIPE_OFFSET = 96
 const SWIPE_VELOCITY = 650
-const SMOOTH = { type: 'tween' as const, duration: 0.32, ease: [0.22, 1, 0.36, 1] as const }
-const EXIT = { type: 'tween' as const, duration: 0.28, ease: [0.4, 0, 1, 1] as const }
+const SNAP_BACK = { type: 'tween' as const, duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }
+const EXIT = { type: 'tween' as const, duration: 0.22, ease: [0.4, 0, 1, 1] as const }
+
+function peekTransform(absoluteIndex: number) {
+  if (absoluteIndex % 2 === 0) {
+    return 'translate(-18px, 10px) rotate(-10deg)'
+  }
+  return 'translate(18px, 12px) rotate(10deg)'
+}
 
 const POSTER_FAN = [
   { z: 1, rotate: -16, x: -36 },
   { z: 3, rotate: 0, x: 0 },
   { z: 2, rotate: 14, x: 36 },
-] as const
-
-const PEEK = [
-  { rotate: -10, x: -18, y: 10, scale: 0.96 },
-  { rotate: 10, x: 18, y: 12, scale: 0.94 },
 ] as const
 
 function PosterFan({ posters }: { posters: (string | null)[] }) {
@@ -112,7 +114,6 @@ export function MoodPickerOverlay({
   const [index, setIndex] = useState(0)
   const x = useMotionValue(0)
   const rotate = useTransform(x, [-280, 0, 280], [-12, 0, 12])
-  const nextScale = useTransform(x, [-220, 0, 220], [0.99, 0.96, 0.99])
   const dragDistance = useRef(0)
   const swiping = useRef(false)
 
@@ -154,7 +155,7 @@ export function MoodPickerOverlay({
       Math.abs(info.velocity.x) > SWIPE_VELOCITY
 
     if (!shouldSwipe) {
-      void animate(x, 0, SMOOTH)
+      void animate(x, 0, SNAP_BACK)
       return
     }
 
@@ -177,32 +178,21 @@ export function MoodPickerOverlay({
 
         <div className="relative mb-8 h-[19.5rem] w-[15.25rem]">
           {secondBehind ? (
-            <motion.div
-              key={secondBehind.mood}
+            <div
               className="absolute inset-0"
-              style={{ zIndex: 1 }}
-              initial={false}
-              animate={PEEK[1]}
-              transition={SMOOTH}
+              style={{ zIndex: 1, transform: peekTransform(index + 2) }}
             >
               <GlassCard card={secondBehind} peek />
-            </motion.div>
+            </div>
           ) : null}
 
           {firstBehind ? (
-            <motion.div
-              key={firstBehind.mood}
+            <div
               className="absolute inset-0"
-              style={{
-                zIndex: 2,
-                rotate: PEEK[0].rotate,
-                x: PEEK[0].x,
-                y: PEEK[0].y,
-                scale: nextScale,
-              }}
+              style={{ zIndex: 2, transform: peekTransform(index + 1) }}
             >
               <GlassCard card={firstBehind} peek />
-            </motion.div>
+            </div>
           ) : null}
 
           <motion.button
@@ -226,16 +216,13 @@ export function MoodPickerOverlay({
                 onSelect(front.mood)
               }
             }}
-            initial={{ opacity: 0.9, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={SMOOTH}
             aria-label={`Choose mood ${moodLabel(front.mood)}`}
           >
             <GlassCard card={front} />
           </motion.button>
         </div>
 
-        <Link href="/backlog" className="btn-primary w-full">
+        <Link href="/backlog" className="btn-primary">
           View Full Backlog
         </Link>
       </div>
