@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { MediaTypeTabs, type MediaTypeTab } from '@/components/MediaTypeTabs'
 import { MoodCarousel } from '@/components/MoodCarousel'
+import { MoodPickerOverlay } from '@/components/MoodPickerOverlay'
 import { TitleGrid } from '@/components/TitleGrid'
+import { collectMoodCards } from '@/lib/moods/picker'
 import { UndoWatchedToast } from '@/components/UndoWatchedToast'
 import { WatchedProgress } from '@/components/WatchedProgress'
 import { useBacklogTitles } from '@/hooks/useBacklogTitles'
@@ -29,6 +31,8 @@ export function WhatFitsNow({ userId, initialTitles }: WhatFitsNowProps) {
   const [mediaType, setMediaType] = useState<MediaTypeTab>('all')
   const [moodOptions, setMoodOptions] = useState<string[]>([ALL_MOOD, ...MOOD_TAGS])
   const [mood, setMood] = useState<string>(ALL_MOOD)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const pickerArmed = useRef(false)
 
   useEffect(() => {
     const nextMoods = [
@@ -62,12 +66,32 @@ export function WhatFitsNow({ userId, initialTitles }: WhatFitsNowProps) {
   const moodTotal = moodTitles.length
   const moodWatched = moodTitles.filter((title) => title.status === 'done').length
 
+  const moodCards = useMemo(() => collectMoodCards(titles), [titles])
+
+  useEffect(() => {
+    if (pickerArmed.current) return
+    if (moodCards.length === 0) return
+    pickerArmed.current = true
+    setPickerOpen(true)
+  }, [moodCards.length])
+
   const emptyMessage = filtersActive
     ? 'Nothing matches right now — try a different mood or type.'
     : 'Your backlog is empty — add something to watch or read.'
 
   return (
     <div>
+      {pickerOpen ? (
+        <MoodPickerOverlay
+          cards={moodCards}
+          onSelect={(selected) => {
+            setMood(selected)
+            setPickerOpen(false)
+          }}
+          onDismiss={() => setPickerOpen(false)}
+        />
+      ) : null}
+
       <MoodCarousel moods={moodOptions} value={mood} onChange={setMood} />
 
       <WatchedProgress watchedCount={moodWatched} totalCount={moodTotal} />
