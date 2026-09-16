@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 
 const BUILD_ID =
   process.env.NEXT_PUBLIC_SW_CACHE_VERSION ||
@@ -13,37 +12,20 @@ type NavUpdatedMessage = {
   reason?: 'build' | 'content'
 }
 
-/** Registers the service worker and applies background cache updates. */
+/** Registers the service worker. Does not reload on launch — that kept the splash up. */
 export function PwaRegister() {
-  const router = useRouter()
-
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
 
-    const hadController = Boolean(navigator.serviceWorker.controller)
-    let refreshing = false
-
-    function onControllerChange() {
-      // First SW taking control is not an update — don't reload (avoids a second splash).
-      if (!hadController || refreshing) return
-      refreshing = true
-      window.location.reload()
-    }
-
     function onWorkerMessage(event: MessageEvent<NavUpdatedMessage>) {
       if (event.data?.type !== 'NAV_UPDATED') return
-      if (event.data.reason === 'build') {
-        if (refreshing) return
-        refreshing = true
+      if (event.data.reason !== 'build') return
+      // New deployment's JS chunks changed — apply after this paint, not during splash.
+      window.setTimeout(() => {
         window.location.reload()
-        return
-      }
-      if (event.data.reason === 'content') {
-        router.refresh()
-      }
+      }, 2500)
     }
 
-    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange)
     navigator.serviceWorker.addEventListener('message', onWorkerMessage)
 
     async function register() {
@@ -92,11 +74,10 @@ export function PwaRegister() {
     const cleanupPromise = register()
 
     return () => {
-      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange)
       navigator.serviceWorker.removeEventListener('message', onWorkerMessage)
       void cleanupPromise.then((cleanup) => cleanup?.())
     }
-  }, [router])
+  }, [])
 
   return null
 }

@@ -21,10 +21,42 @@ export type UndoAction =
     }
 
 /** Shared list state: keep done titles in memory for counts, with a short undo window. */
-export function useBacklogTitles(initialTitles: Title[]) {
+export function useBacklogTitles(initialTitles: Title[], cacheKey?: string) {
   const [titles, setTitles] = useState(initialTitles)
   const [undo, setUndo] = useState<UndoAction | null>(null)
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hydratedCache = useRef(false)
+
+  useEffect(() => {
+    if (hydratedCache.current) return
+    hydratedCache.current = true
+    if (initialTitles.length > 0 || !cacheKey || typeof window === 'undefined') return
+    try {
+      const raw = window.localStorage.getItem(cacheKey)
+      if (!raw) return
+      const cached = JSON.parse(raw) as Title[]
+      if (Array.isArray(cached) && cached.length > 0) {
+        setTitles(cached)
+      }
+    } catch {
+      // ignore bad cache
+    }
+  }, [cacheKey, initialTitles.length])
+
+  useEffect(() => {
+    if (initialTitles.length > 0) {
+      setTitles(initialTitles)
+    }
+  }, [initialTitles])
+
+  useEffect(() => {
+    if (!cacheKey || titles.length === 0) return
+    try {
+      window.localStorage.setItem(cacheKey, JSON.stringify(titles))
+    } catch {
+      // quota / private mode
+    }
+  }, [cacheKey, titles])
 
   useEffect(() => {
     return () => {

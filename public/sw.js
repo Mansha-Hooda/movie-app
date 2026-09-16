@@ -138,14 +138,29 @@ function isStaticAsset(url) {
   )
 }
 
+function navigationCacheKey(request) {
+  const url = new URL(request.url)
+  return new Request(`${url.origin}${url.pathname}`, {
+    method: 'GET',
+    headers: { Accept: 'text/html' },
+  })
+}
+
+function isRscRequest(url) {
+  return url.searchParams.has('_rsc')
+}
+
 /** Stale-while-revalidate: return cache immediately, refresh in the background. */
 async function staleWhileRevalidate(request, { notifyOnHtmlChange = false } = {}) {
   const cache = await caches.open(STATIC_CACHE)
-  const cached = await cache.match(request)
+  const cacheKey = notifyOnHtmlChange ? navigationCacheKey(request) : request
+  const cached =
+    (await cache.match(cacheKey, { ignoreSearch: true, ignoreVary: true })) ||
+    (await cache.match(request, { ignoreSearch: true, ignoreVary: true }))
 
   const networkPromise = fetch(request)
     .then(async (response) => {
-      if (response && response.ok) {
+      if (response && response.ok && response.status === 200) {
         if (notifyOnHtmlChange && cached) {
           try {
             const [cachedText, freshText] = await Promise.all([
@@ -154,16 +169,14 @@ async function staleWhileRevalidate(request, { notifyOnHtmlChange = false } = {}
             ])
             const cachedBuild = buildFingerprint(cachedText)
             const freshBuild = buildFingerprint(freshText)
-            if (cachedBuild !== freshBuild) {
+            if (cachedBuild && freshBuild && cachedBuild !== freshBuild) {
               await notifyClients({ type: 'NAV_UPDATED', reason: 'build' })
-            } else if (cachedText !== freshText) {
-              await notifyClients({ type: 'NAV_UPDATED', reason: 'content' })
             }
           } catch {
             // Comparison is best-effort — still cache the fresh response.
           }
         }
-        cache.put(request, response.clone())
+        await cache.put(cacheKey, response.clone())
       }
       return response
     })
@@ -177,7 +190,10 @@ async function staleWhileRevalidate(request, { notifyOnHtmlChange = false } = {}
   const fresh = await networkPromise
   if (fresh) return fresh
   if (notifyOnHtmlChange) {
-    const home = await cache.match('/')
+    const home = await cache.match(navigationCacheKey(new Request(`${self.location.origin}/`)), {
+      ignoreSearch: true,
+      ignoreVary: true,
+    })
     if (home) return home
   }
   return new Response('Offline', { status: 503, statusText: 'Offline' })
@@ -216,7 +232,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isNavigationRequest(request)) {
-    if (url.pathname.startsWith('/auth/')) {
+    if (url.pathname.startsWith('/auth/') || isRscRequest(url)) {
       return
     }
     event.respondWith(staleWhileRevalidate(request, { notifyOnHtmlChange: true }))

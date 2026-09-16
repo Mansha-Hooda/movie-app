@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { X } from 'lucide-react'
 import { TitleForm } from '@/components/TitleForm'
 import { fetchUserTitles } from '@/lib/titles/api'
+import { getSessionUser } from '@/lib/supabase/session'
 import { createClient } from '@/lib/supabase/server'
 import type { MediaType } from '@/types/database'
 
@@ -21,15 +22,13 @@ function parseMediaType(value: string | undefined): MediaType | undefined {
 }
 
 export default async function AddPage({ searchParams }: AddPageProps) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { user } = await getSessionUser()
 
   if (!user) {
     redirect('/login')
   }
 
+  const supabase = await createClient()
   const params = await searchParams
   const initialName = params.name?.trim() || undefined
   const initialMediaType = parseMediaType(params.media_type)

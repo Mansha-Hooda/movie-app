@@ -3,17 +3,16 @@ import { AppHeader } from '@/components/AppHeader'
 import { ShareHandlerClient } from '@/components/ShareHandlerClient'
 import { fetchUserTitles } from '@/lib/titles/api'
 import { createClient } from '@/lib/supabase/server'
+import { getSessionUser } from '@/lib/supabase/session'
 
 export default async function ShareHandlerPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { user } = await getSessionUser()
 
   if (!user) {
     redirect('/login')
   }
 
+  const supabase = await createClient()
   const { data: titles } = await fetchUserTitles(supabase, user.id)
 
   return (

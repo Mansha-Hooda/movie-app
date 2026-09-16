@@ -25,7 +25,7 @@ export function WhatFitsNow({ userId, initialTitles }: WhatFitsNowProps) {
     undo,
     undoAction,
     dismissUndo,
-  } = useBacklogTitles(initialTitles)
+  } = useBacklogTitles(initialTitles, `bookmark-titles:${userId}`)
   const [mediaType, setMediaType] = useState<MediaTypeTab>('all')
   const [moodOptions, setMoodOptions] = useState<string[]>([ALL_MOOD, ...MOOD_TAGS])
   const [mood, setMood] = useState<string>(ALL_MOOD)
