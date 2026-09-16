@@ -1,23 +1,21 @@
 import type { Title } from '@/types/database'
 
-export type MoodGradient = {
-  from: string
-  via: string
-  to: string
-}
-
 export type MoodCardData = {
   mood: string
   posters: (string | null)[]
-  gradient: MoodGradient
+  color: string
 }
 
-/** Purple / teal / violet / dusk — assigned by hashing the mood name. */
-const GRADIENTS: MoodGradient[] = [
-  { from: '#9B7DFF', via: '#7A5AF8', to: '#2A1848' },
-  { from: '#5EEAD4', via: '#14B8A6', to: '#0F2F2C' },
-  { from: '#818CF8', via: '#6366F1', to: '#1E1B4B' },
-  { from: '#C4B5FD', via: '#8B5CF6', to: '#2E1064' },
+/** Dark-theme purples and indigos around the primary accent. */
+const MOOD_COLORS = [
+  '#6C00F8',
+  '#7C3AED',
+  '#4F46E5',
+  '#5B21B6',
+  '#3730A3',
+  '#6D28D9',
+  '#4338CA',
+  '#0F766E',
 ]
 
 export function hashMoodName(mood: string): number {
@@ -37,8 +35,8 @@ export function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-export function gradientForMood(mood: string): MoodGradient {
-  return GRADIENTS[hashMoodName(mood) % GRADIENTS.length]
+export function colorForMood(mood: string): string {
+  return MOOD_COLORS[hashMoodName(mood) % MOOD_COLORS.length]
 }
 
 /**
@@ -76,7 +74,7 @@ export function collectMoodCards(titles: Title[]): MoodCardData[] {
     cards.push({
       mood,
       posters: unique.map((title) => title.poster_url),
-      gradient: gradientForMood(mood),
+      color: colorForMood(mood),
     })
   }
 

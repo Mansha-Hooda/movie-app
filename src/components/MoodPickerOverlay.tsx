@@ -10,7 +10,7 @@ import {
   type PanInfo,
 } from 'framer-motion'
 import { moodLabel } from '@/lib/titles/moods'
-import { hashMoodName, hexToRgba, type MoodCardData } from '@/lib/moods/picker'
+import { hexToRgba, type MoodCardData } from '@/lib/moods/picker'
 
 type MoodPickerOverlayProps = {
   cards: MoodCardData[]
@@ -18,10 +18,10 @@ type MoodPickerOverlayProps = {
   onDismiss: () => void
 }
 
-const SWIPE_OFFSET = 88
-const SWIPE_VELOCITY = 520
-const SPRING = { type: 'spring' as const, stiffness: 340, damping: 30, mass: 0.75 }
-const EXIT_SPRING = { type: 'spring' as const, stiffness: 240, damping: 24, mass: 0.85 }
+const SWIPE_OFFSET = 96
+const SWIPE_VELOCITY = 650
+const SMOOTH = { type: 'tween' as const, duration: 0.32, ease: [0.22, 1, 0.36, 1] as const }
+const EXIT = { type: 'tween' as const, duration: 0.28, ease: [0.4, 0, 1, 1] as const }
 
 const POSTER_FAN = [
   { z: 1, rotate: -16, x: -36 },
@@ -29,29 +29,22 @@ const POSTER_FAN = [
   { z: 2, rotate: 14, x: 36 },
 ] as const
 
-function peekPose(mood: string, layer: number) {
-  const hash = hashMoodName(mood)
-  const dir = layer % 2 === 0 ? -1 : 1
-  return {
-    rotate: dir * (12 + (hash % 11)),
-    x: dir * (34 + (hash % 16)),
-    y: 16 + ((hash >> 4) % 14),
-    scale: 0.93 - layer * 0.03,
-  }
-}
+const PEEK = [
+  { rotate: -10, x: -18, y: 10, scale: 0.96 },
+  { rotate: 10, x: 18, y: 12, scale: 0.94 },
+] as const
 
 function PosterFan({ posters }: { posters: (string | null)[] }) {
   return (
-    <div className="relative mx-auto h-[9.25rem] w-[11.25rem]">
+    <div className="relative mx-auto h-[9.75rem] w-[11.5rem]">
       {POSTER_FAN.map((style, index) => (
         <div
           key={index}
-          className="absolute top-1/2 left-1/2 h-[8.1rem] w-[5.4rem] overflow-hidden rounded-2xl border border-white/20 shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
+          className="absolute top-1/2 left-1/2 w-[5.4rem] overflow-hidden rounded-xl bg-surface shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
           style={{
             zIndex: style.z,
+            aspectRatio: '2 / 3',
             transform: `translate(-50%, -50%) translateX(${style.x}px) rotate(${style.rotate}deg)`,
-            background:
-              'linear-gradient(160deg, #3a3644 0%, #2a2633 50%, #1c1a20 100%)',
           }}
         >
           {posters[index] ? (
@@ -62,19 +55,26 @@ function PosterFan({ posters }: { posters: (string | null)[] }) {
               draggable={false}
               className="h-full w-full object-cover"
             />
-          ) : null}
+          ) : (
+            <div
+              className="h-full w-full"
+              style={{
+                background:
+                  'linear-gradient(160deg, #2a2633 0%, #1c1a20 45%, #332f3d 100%)',
+              }}
+            />
+          )}
         </div>
       ))}
     </div>
   )
 }
 
-function glassStyle(card: MoodCardData, peek: boolean) {
-  const strength = peek ? 0.34 : 0.42
+function glassStyle(color: string) {
   return {
-    background: `linear-gradient(160deg, ${hexToRgba(card.gradient.from, strength + 0.1)} 0%, ${hexToRgba(card.gradient.via, strength)} 48%, ${hexToRgba(card.gradient.to, 0.36)} 100%)`,
-    backdropFilter: 'blur(28px) saturate(1.4)',
-    WebkitBackdropFilter: 'blur(28px) saturate(1.4)',
+    background: hexToRgba(color, 0.6),
+    backdropFilter: 'blur(28px) saturate(1.35)',
+    WebkitBackdropFilter: 'blur(28px) saturate(1.35)',
   }
 }
 
@@ -87,8 +87,8 @@ function GlassCard({
 }) {
   return (
     <div
-      className="h-full w-full overflow-hidden rounded-[26px] border border-white/18 shadow-[0_18px_44px_rgba(0,0,0,0.38)]"
-      style={glassStyle(card, peek)}
+      className="h-full w-full overflow-hidden rounded-[26px] border border-white/15 shadow-[0_18px_44px_rgba(0,0,0,0.38)]"
+      style={glassStyle(card.color)}
     >
       {peek ? null : (
         <div className="flex h-full flex-col px-5 pt-6 pb-5">
@@ -111,9 +111,8 @@ export function MoodPickerOverlay({
 }: MoodPickerOverlayProps) {
   const [index, setIndex] = useState(0)
   const x = useMotionValue(0)
-  const rotate = useTransform(x, [-240, 0, 240], [-14, 0, 14])
-  const nearestScale = useTransform(x, [-200, 0, 200], [0.98, 0.93, 0.98])
-  const nearestY = useTransform(x, [-200, 0, 200], [8, 16, 8])
+  const rotate = useTransform(x, [-280, 0, 280], [-12, 0, 12])
+  const nextScale = useTransform(x, [-220, 0, 220], [0.99, 0.96, 0.99])
   const dragDistance = useRef(0)
   const swiping = useRef(false)
 
@@ -155,25 +154,19 @@ export function MoodPickerOverlay({
       Math.abs(info.velocity.x) > SWIPE_VELOCITY
 
     if (!shouldSwipe) {
-      void animate(x, 0, SPRING)
+      void animate(x, 0, SMOOTH)
       return
     }
 
     swiping.current = true
     const direction = info.offset.x + info.velocity.x > 0 ? 1 : -1
-    await animate(x, direction * 560, {
-      ...EXIT_SPRING,
-      velocity: info.velocity.x,
-    })
+    await animate(x, direction * 640, EXIT)
     advance()
   }
 
   if (!front) {
     return null
   }
-
-  const secondPose = secondBehind ? peekPose(secondBehind.mood, 1) : null
-  const firstPose = firstBehind ? peekPose(firstBehind.mood, 0) : null
 
   return (
     <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-black px-8">
@@ -183,29 +176,29 @@ export function MoodPickerOverlay({
         </h2>
 
         <div className="relative mb-8 h-[19.5rem] w-[15.25rem]">
-          {secondBehind && secondPose ? (
+          {secondBehind ? (
             <motion.div
               key={secondBehind.mood}
               className="absolute inset-0"
               style={{ zIndex: 1 }}
               initial={false}
-              animate={secondPose}
-              transition={SPRING}
+              animate={PEEK[1]}
+              transition={SMOOTH}
             >
               <GlassCard card={secondBehind} peek />
             </motion.div>
           ) : null}
 
-          {firstBehind && firstPose ? (
+          {firstBehind ? (
             <motion.div
               key={firstBehind.mood}
               className="absolute inset-0"
               style={{
                 zIndex: 2,
-                rotate: firstPose.rotate,
-                x: firstPose.x,
-                scale: nearestScale,
-                y: nearestY,
+                rotate: PEEK[0].rotate,
+                x: PEEK[0].x,
+                y: PEEK[0].y,
+                scale: nextScale,
               }}
             >
               <GlassCard card={firstBehind} peek />
@@ -218,10 +211,8 @@ export function MoodPickerOverlay({
             className="absolute inset-0 z-10 cursor-grab touch-none appearance-none border-0 bg-transparent p-0 text-left active:cursor-grabbing"
             style={{ x, rotate, touchAction: 'none' }}
             drag="x"
-            dragElastic={0.22}
+            dragElastic={0}
             dragMomentum={false}
-            dragConstraints={{ left: -260, right: 260 }}
-            dragTransition={{ bounceStiffness: 380, bounceDamping: 30 }}
             onDragStart={() => {
               dragDistance.current = 0
             }}
@@ -235,19 +226,16 @@ export function MoodPickerOverlay({
                 onSelect(front.mood)
               }
             }}
-            initial={{ scale: 0.94, y: 22, opacity: 0.88 }}
-            animate={{ scale: 1, y: 0, opacity: 1 }}
-            transition={SPRING}
+            initial={{ opacity: 0.9, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={SMOOTH}
             aria-label={`Choose mood ${moodLabel(front.mood)}`}
           >
             <GlassCard card={front} />
           </motion.button>
         </div>
 
-        <Link
-          href="/backlog"
-          className="inline-flex min-w-[13.5rem] items-center justify-center rounded-full bg-accent px-8 py-3 text-sm font-semibold text-white transition duration-150 hover:brightness-110 active:scale-95"
-        >
+        <Link href="/backlog" className="btn-primary w-full">
           View Full Backlog
         </Link>
       </div>
