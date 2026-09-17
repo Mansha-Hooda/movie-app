@@ -11,6 +11,11 @@ import {
 } from 'framer-motion'
 import { moodLabel } from '@/lib/titles/moods'
 import { hexToRgba, type MoodCardData } from '@/lib/moods/picker'
+import { FIGMA_GLASS } from '@/lib/moods/figmaGlass'
+import {
+  MoodGlassFilter,
+  useMoodGlassFilterId,
+} from '@/components/MoodGlassFilter'
 
 type MoodPickerOverlayProps = {
   cards: MoodCardData[]
@@ -72,28 +77,33 @@ function PosterFan({ posters }: { posters: (string | null)[] }) {
   )
 }
 
-function glassStyle(color: string) {
+const CARD_RADIUS = 26
+
+function glassStyle(color: string, filterId: string) {
+  const filter = `blur(${FIGMA_GLASS.frost}px) url(#${filterId})`
   return {
     background: hexToRgba(color, 0.6),
-    backdropFilter: 'blur(28px) saturate(1.35)',
-    WebkitBackdropFilter: 'blur(28px) saturate(1.35)',
+    backdropFilter: filter,
+    WebkitBackdropFilter: filter,
   }
 }
 
 function GlassCard({
   card,
   peek = false,
+  filterId,
 }: {
   card: MoodCardData
   peek?: boolean
+  filterId: string
 }) {
   return (
     <div
-      className="h-full w-full overflow-hidden rounded-[26px] border border-white/15 shadow-[0_18px_44px_rgba(0,0,0,0.38)]"
-      style={glassStyle(card.color)}
+      className="mood-glass-card h-full w-full"
+      style={glassStyle(card.color, filterId)}
     >
       {peek ? null : (
-        <div className="flex h-full flex-col px-5 pt-6 pb-5">
+        <div className="relative z-[1] flex h-full flex-col px-5 pt-6 pb-5">
           <h3 className="text-center text-[1.3rem] font-bold tracking-tight text-white">
             {moodLabel(card.mood)}
           </h3>
@@ -116,6 +126,9 @@ export function MoodPickerOverlay({
   const rotate = useTransform(x, [-280, 0, 280], [-12, 0, 12])
   const dragDistance = useRef(0)
   const swiping = useRef(false)
+  const stackRef = useRef<HTMLDivElement>(null)
+  const filterId = useMoodGlassFilterId()
+  const [cardSize, setCardSize] = useState({ width: 244, height: 312 })
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -125,6 +138,21 @@ export function MoodPickerOverlay({
       document.body.classList.remove('mood-picker-open')
       document.body.style.overflow = previousOverflow
     }
+  }, [])
+
+  useEffect(() => {
+    const node = stackRef.current
+    if (!node) return
+
+    function measure() {
+      if (!node) return
+      setCardSize({ width: node.clientWidth, height: node.clientHeight })
+    }
+
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
@@ -176,13 +204,19 @@ export function MoodPickerOverlay({
           Welcome back, what&apos;s your mood for today?
         </h2>
 
-        <div className="relative mb-8 h-[19.5rem] w-[15.25rem]">
+        <div ref={stackRef} className="relative mb-8 h-[19.5rem] w-[15.25rem]">
+          <MoodGlassFilter
+            width={cardSize.width}
+            height={cardSize.height}
+            radius={CARD_RADIUS}
+            filterId={filterId}
+          />
           {secondBehind ? (
             <div
               className="absolute inset-0"
               style={{ zIndex: 1, transform: peekTransform(index + 2) }}
             >
-              <GlassCard card={secondBehind} peek />
+              <GlassCard card={secondBehind} peek filterId={filterId} />
             </div>
           ) : null}
 
@@ -191,7 +225,7 @@ export function MoodPickerOverlay({
               className="absolute inset-0"
               style={{ zIndex: 2, transform: peekTransform(index + 1) }}
             >
-              <GlassCard card={firstBehind} peek />
+              <GlassCard card={firstBehind} peek filterId={filterId} />
             </div>
           ) : null}
 
@@ -218,7 +252,7 @@ export function MoodPickerOverlay({
             }}
             aria-label={`Choose mood ${moodLabel(front.mood)}`}
           >
-            <GlassCard card={front} />
+            <GlassCard card={front} filterId={filterId} />
           </motion.button>
         </div>
 
