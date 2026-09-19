@@ -6,6 +6,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 PURPLE = (108, 0, 248, 255)  # #6C00F8
+BLACK = (0, 0, 0, 255)
 WHITE = (255, 255, 255, 255)
 ROOT = Path('/Users/mansha.hooda/movie app')
 PUBLIC = ROOT / 'public'
@@ -161,7 +162,7 @@ def load_font(size: int) -> ImageFont.ImageFont:
 
 
 def make_splash(glyph: Image.Image, width: int, height: int) -> Image.Image:
-    img = Image.new('RGBA', (width, height), PURPLE)
+    img = Image.new('RGBA', (width, height), BLACK)
     draw = ImageDraw.Draw(img)
     mark_size = int(min(width, height) * 0.22)
     mark = fit_glyph(glyph, mark_size)
@@ -198,7 +199,10 @@ def main() -> None:
     save_png(make_app_icon(logo, 180), PUBLIC / 'apple-touch-icon.png')
     save_png(make_app_icon(logo, 192), PUBLIC / 'pwa-192x192.png')
     save_png(make_app_icon(logo, 512), PUBLIC / 'pwa-512x512.png')
-    # Chrome's launch splash uses purpose "any" — use the BOOKMARK frame, not the logo tile.
+    # Separate URLs from purpose "any" so Chrome does not treat the launcher
+    # icon as maskable and pad it onto a white splash.
+    save_png(make_app_icon(logo, 192), PUBLIC / 'pwa-maskable-192.png')
+    save_png(make_app_icon(logo, 512), PUBLIC / 'pwa-maskable-512.png')
     save_png(make_splash(glyph, 192, 192), PUBLIC / 'pwa-splash-192.png')
     save_png(make_splash(glyph, 512, 512), PUBLIC / 'pwa-splash-512.png')
     save_png(make_app_icon(logo, 512), APP / 'icon.png')

@@ -6,7 +6,7 @@ const SHARE_CACHE = 'share-target-v1'
 const SHARE_IMAGE_KEY = 'shared-image'
 const SHARE_LINK_KEY = 'shared-link'
 
-const PRECACHE_URLS = ['/manifest.json', '/splash.png', '/logo-mark.png', '/icon.png']
+const PRECACHE_URLS = ['/splash.png', '/logo-mark.png', '/icon.png']
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
@@ -133,7 +133,7 @@ function isNavigationRequest(request) {
 
 function isStaticAsset(url) {
   if (url.pathname.startsWith('/_next/static/')) return true
-  if (url.pathname === '/manifest.json') return true
+  if (url.pathname === '/manifest.json') return false
   return /\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|eot)$/i.test(
     url.pathname,
   )

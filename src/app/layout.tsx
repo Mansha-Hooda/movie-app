@@ -58,7 +58,7 @@ const APPLE_STARTUP_IMAGES = [
 export const metadata: Metadata = {
   title: 'Backlog',
   description: 'Capture and surface movie, show, and book recommendations.',
-  manifest: '/manifest.json?v=8',
+  manifest: '/manifest.json?v=9',
   appleWebApp: {
     capable: true,
     title: 'BOOKMARK',
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#6C00F8',
+  themeColor: '#000000',
 }
 
 export default function RootLayout({
