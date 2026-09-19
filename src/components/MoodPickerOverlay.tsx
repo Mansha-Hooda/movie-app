@@ -79,6 +79,7 @@ export function MoodPickerOverlay({
     if (!node) return
 
     function measure() {
+      if (!node) return
       const viewport = node.getBoundingClientRect().width
       const nextCardW = Math.min(HEADING_MAX_PX, Math.max(0, viewport - SIDE_INSET))
       setViewportW(viewport)
