@@ -6,18 +6,18 @@ export type MoodCardData = {
   color: string
 }
 
-/** Distinct hues that still read on the dark theme; assigned uniquely per mood. */
+/** Distinct purples around the primary accent, assigned uniquely per mood. */
 const MOOD_COLORS = [
   '#6C00F8',
-  '#0D9488',
-  '#2563EB',
-  '#E11D48',
-  '#CA8A04',
-  '#16A34A',
-  '#DB2777',
-  '#EA580C',
-  '#0891B2',
   '#7C3AED',
+  '#5B21B6',
+  '#8B5CF6',
+  '#4C1D95',
+  '#A78BFA',
+  '#6D28D9',
+  '#4338CA',
+  '#7E22CE',
+  '#5B4BDB',
 ]
 
 export function hexToRgba(hex: string, alpha: number): string {
