@@ -126,8 +126,9 @@ export function MoodPickerOverlay({
   }
 
   return (
-    <div className="fixed inset-0 z-[80] px-8" style={{ background: '#1C1C1E' }}>
-      <div className="relative mx-auto flex h-full w-full max-w-[18.5rem] flex-col items-center overflow-visible pt-[64px] pb-[64px]">
+    <div className="fixed inset-0 z-[80] overflow-hidden px-8" style={{ background: '#1C1C1E' }}>
+      <div className="mood-picker-glow" aria-hidden />
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-[18.5rem] flex-col items-center overflow-visible pt-[64px] pb-[64px]">
         <h2 className="w-full shrink-0 text-center text-[1.85rem] font-bold leading-[1.2] tracking-tight text-white">
           Welcome back, what&apos;s your mood for today?
         </h2>

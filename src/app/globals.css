@@ -23,6 +23,21 @@ body.mood-picker-open [data-add-fab] {
   pointer-events: none;
 }
 
+.mood-picker-glow {
+  pointer-events: none;
+  position: absolute;
+  top: -18%;
+  left: 50%;
+  z-index: 0;
+  width: min(150vw, 44rem);
+  height: min(90vw, 28rem);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, #7a5af8 0%, rgb(122 90 248 / 0) 70%);
+  opacity: 0.38;
+  filter: blur(96px);
+}
+
 .mood-card {
   position: relative;
   height: 100%;
