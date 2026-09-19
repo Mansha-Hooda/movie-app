@@ -16,12 +16,12 @@ export function isBuiltInMood(value: string): value is MoodTag {
 }
 
 export function moodLabel(value: string): string {
-  if (value === ALL_MOOD) return 'all'
-  if (value === WATCHED_MOOD) return 'Watched'
+  if (value === ALL_MOOD) return 'ALL'
+  if (value === WATCHED_MOOD) return 'WATCHED'
   if (isBuiltInMood(value)) {
-    return MOOD_DISPLAY_LABELS[value]
+    return MOOD_DISPLAY_LABELS[value].toUpperCase()
   }
-  return value
+  return value.toUpperCase()
 }
 
 function normalize(value: string) {

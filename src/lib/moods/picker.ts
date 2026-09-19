@@ -29,6 +29,23 @@ export function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
+export function newestPosterUrls(titles: Title[], limit = 3): string[] {
+  const newest = [...titles].sort(
+    (a, b) => new Date(b.date_added).getTime() - new Date(a.date_added).getTime(),
+  )
+  const urls: string[] = []
+  const seen = new Set<string>()
+
+  for (const title of newest) {
+    if (seen.has(title.id) || !title.poster_url) continue
+    seen.add(title.id)
+    urls.push(title.poster_url)
+    if (urls.length === limit) break
+  }
+
+  return urls
+}
+
 function colorForIndex(index: number): string {
   return MOOD_COLORS[index % MOOD_COLORS.length]
 }
@@ -67,7 +84,7 @@ export function collectMoodCards(titles: Title[]): MoodCardData[] {
 
     cards.push({
       mood,
-      posters: unique.map((title) => title.poster_url),
+      posters: newestPosterUrls(unique),
       color: '',
     })
   }

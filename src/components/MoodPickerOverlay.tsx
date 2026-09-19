@@ -10,6 +10,7 @@ import {
 } from 'framer-motion'
 import { moodLabel } from '@/lib/titles/moods'
 import { hexToRgba, type MoodCardData } from '@/lib/moods/picker'
+import { PosterFan } from '@/components/PosterFan'
 
 type MoodPickerOverlayProps = {
   cards: MoodCardData[]
@@ -27,49 +28,6 @@ function peekPose(depth: number) {
   if (depth <= 1) return { rotate: 0, x: 0, y: 0 }
   if (depth === 2) return { rotate: 10, x: 28, y: 10 }
   return { rotate: -10, x: -28, y: 10 }
-}
-
-const POSTER_FAN = [
-  [{ z: 3, rotate: 0, x: 0, y: 0 }],
-  [
-    { z: 1, rotate: -18, x: -42, y: 14 },
-    { z: 2, rotate: 18, x: 42, y: 14 },
-  ],
-  [
-    { z: 1, rotate: -20, x: -52, y: 18 },
-    { z: 3, rotate: 0, x: 0, y: -6 },
-    { z: 2, rotate: 20, x: 52, y: 18 },
-  ],
-] as const
-
-function PosterFan({ posters }: { posters: (string | null)[] }) {
-  const urls = posters.filter((url): url is string => Boolean(url))
-  const layout = POSTER_FAN[urls.length - 1]
-  if (!layout) return null
-
-  return (
-    <div className="relative mx-auto h-[12.5rem] w-[15rem]">
-      {layout.map((style, index) => (
-        <div
-          key={urls[index]}
-          className="absolute top-1/2 left-1/2 w-[6.1rem] overflow-hidden rounded-[1.35rem] bg-surface shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
-          style={{
-            zIndex: style.z,
-            aspectRatio: '2 / 3',
-            transform: `translate(-50%, -50%) translate(${style.x}px, ${style.y}px) rotate(${style.rotate}deg)`,
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={urls[index]}
-            alt=""
-            draggable={false}
-            className="h-full w-full object-cover"
-          />
-        </div>
-      ))}
-    </div>
-  )
 }
 
 function MoodCard({

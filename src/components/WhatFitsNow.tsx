@@ -6,7 +6,7 @@ import { MoodCarousel } from '@/components/MoodCarousel'
 import { MoodListSheet } from '@/components/MoodListSheet'
 import { MoodPickerOverlay } from '@/components/MoodPickerOverlay'
 import { TitleGrid } from '@/components/TitleGrid'
-import { collectMoodCards } from '@/lib/moods/picker'
+import { collectMoodCards, newestPosterUrls } from '@/lib/moods/picker'
 import { UndoWatchedToast } from '@/components/UndoWatchedToast'
 import { ItemCount } from '@/components/ItemCount'
 import { useBacklogTitles } from '@/hooks/useBacklogTitles'
@@ -85,7 +85,11 @@ export function WhatFitsNow({ userId, initialTitles }: WhatFitsNowProps) {
         } else {
           list = filterTitles(titles, { moods: [option], mediaType })
         }
-        return { mood: option, count: list.length }
+        return {
+          mood: option,
+          count: list.length,
+          posters: newestPosterUrls(list),
+        }
       }),
     [moodOptions, titles, mediaType],
   )

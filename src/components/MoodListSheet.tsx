@@ -1,15 +1,17 @@
 'use client'
 
 import { useEffect, useId } from 'react'
+import { PosterFan } from '@/components/PosterFan'
 import { moodLabel } from '@/lib/titles/moods'
 
-export type MoodOptionCount = {
+export type MoodSheetOption = {
   mood: string
   count: number
+  posters: string[]
 }
 
 type MoodListSheetProps = {
-  options: MoodOptionCount[]
+  options: MoodSheetOption[]
   value: string
   onSelect: (mood: string) => void
   onClose: () => void
@@ -43,7 +45,7 @@ export function MoodListSheet({
       <button
         type="button"
         aria-label="Close mood list"
-        className="absolute inset-0 bg-page/70"
+        className="absolute inset-0 bg-black/80"
         onClick={onClose}
       />
 
@@ -51,32 +53,57 @@ export function MoodListSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="absolute inset-x-0 bottom-0 mx-auto max-h-[min(32rem,80svh)] max-w-lg overflow-y-auto rounded-t-2xl border border-b-0 border-border bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-lg"
+        className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[min(40rem,88svh)] max-w-lg flex-col rounded-t-2xl bg-black px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-lg"
       >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
-        <h2 id={titleId} className="sr-only">
-          Moods
+        <div className="mx-auto mb-5 h-1 w-10 shrink-0 rounded-full bg-border" />
+        <h2 id={titleId} className="mb-5 shrink-0 text-xl font-semibold tracking-tight text-white">
+          Your Moods
         </h2>
 
-        {options.map((option) => {
-          const selected = option.mood === value
-          return (
-            <button
-              key={option.mood}
-              type="button"
-              onClick={() => {
-                onSelect(option.mood)
-                onClose()
-              }}
-              className={`flex w-full items-center justify-between gap-4 py-3 text-left text-base transition-colors duration-150 ${
-                selected ? 'text-accent' : 'text-fg hover:text-accent'
-              }`}
-            >
-              <span>{moodLabel(option.mood)}</span>
-              <span className="text-sm text-muted">{option.count}</span>
-            </button>
-          )
-        })}
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto">
+          {options.map((option) => {
+            const selected = option.mood === value
+            return (
+              <button
+                key={option.mood}
+                type="button"
+                onClick={() => {
+                  onSelect(option.mood)
+                  onClose()
+                }}
+                className={`flex w-full items-center gap-4 rounded-[1.35rem] px-3.5 py-3 text-left transition-colors duration-150 ${
+                  selected ? 'bg-white' : 'bg-[#1c1c1e]'
+                }`}
+              >
+                {option.posters.length > 0 ? (
+                  <PosterFan posters={option.posters} variant="thumb" />
+                ) : (
+                  <div
+                    className={`h-14 w-14 shrink-0 rounded-xl ${
+                      selected ? 'bg-black/10' : 'bg-[#2a2a2c]'
+                    }`}
+                  />
+                )}
+                <span className="min-w-0 flex-1">
+                  <span
+                    className={`block truncate text-[1.05rem] font-semibold ${
+                      selected ? 'text-ink' : 'text-white'
+                    }`}
+                  >
+                    {moodLabel(option.mood)}
+                  </span>
+                  <span
+                    className={`mt-1 block text-sm ${
+                      selected ? 'text-ink/45' : 'text-white/45'
+                    }`}
+                  >
+                    {option.count} {option.count === 1 ? 'item' : 'items'}
+                  </span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
