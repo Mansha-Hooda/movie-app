@@ -10,7 +10,7 @@ import {
   type PanInfo,
 } from 'framer-motion'
 import { moodLabel } from '@/lib/titles/moods'
-import type { MoodCardData } from '@/lib/moods/picker'
+import { hexToRgba, type MoodCardData } from '@/lib/moods/picker'
 
 type MoodPickerOverlayProps = {
   cards: MoodCardData[]
@@ -80,7 +80,13 @@ function MoodCard({
   peek?: boolean
 }) {
   return (
-    <div className="mood-card">
+    <div
+      className="mood-card"
+      style={{
+        ['--mood-fill' as string]: hexToRgba(card.color, 0.7),
+        ['--mood-fill-fallback' as string]: hexToRgba(card.color, 0.85),
+      }}
+    >
       {peek ? null : (
         <div className="relative z-[1] flex h-full flex-col px-5 pt-6 pb-5">
           <h3 className="text-center text-[1.3rem] font-bold tracking-tight text-white">
@@ -158,58 +164,62 @@ export function MoodPickerOverlay({
 
   return (
     <div className="fixed inset-0 z-[80] px-8" style={{ background: '#1C1C1E' }}>
-      <div className="relative mx-auto flex h-full w-full max-w-[18.5rem] flex-col items-center overflow-visible pt-[64px]">
-        <h2 className="mb-8 w-full text-center text-[1.85rem] font-bold leading-[1.2] tracking-tight text-white">
+      <div className="relative mx-auto flex h-full w-full max-w-[18.5rem] flex-col items-center overflow-visible pt-[64px] pb-[64px]">
+        <h2 className="w-full shrink-0 text-center text-[1.85rem] font-bold leading-[1.2] tracking-tight text-white">
           Welcome back, what&apos;s your mood for today?
         </h2>
 
-        <div className="relative h-[19.5rem] w-[15.25rem] overflow-visible">
-          {remaining.slice(1, 4).map((card, offset) => {
-            const depth = offset + 1
-            return (
-              <motion.div
-                key={card.mood}
-                className="absolute inset-0 overflow-visible"
-                style={{ zIndex: 4 - depth }}
-                initial={false}
-                animate={peekPose(depth)}
-                transition={SNAP_BACK}
-              >
-                <MoodCard card={card} peek />
-              </motion.div>
-            )
-          })}
+        <div className="flex min-h-0 w-full flex-1 flex-col">
+          <div className="min-h-0 flex-1" />
+          <div className="relative mx-auto h-[19.5rem] w-[15.25rem] shrink-0 overflow-visible">
+            {remaining.slice(1, 4).map((card, offset) => {
+              const depth = offset + 1
+              return (
+                <motion.div
+                  key={card.mood}
+                  className="absolute inset-0 overflow-visible"
+                  style={{ zIndex: 4 - depth }}
+                  initial={false}
+                  animate={peekPose(depth)}
+                  transition={SNAP_BACK}
+                >
+                  <MoodCard card={card} peek />
+                </motion.div>
+              )
+            })}
 
-          <motion.button
-            key={front.mood}
-            type="button"
-            className="absolute inset-0 z-10 cursor-grab overflow-visible appearance-none border-0 bg-transparent p-0 text-left active:cursor-grabbing"
-            style={{ x, rotate, touchAction: 'none' }}
-            drag="x"
-            dragElastic={0}
-            dragMomentum={false}
-            onDragStart={() => {
-              dragDistance.current = 0
-            }}
-            onDrag={(_, info) => {
-              dragDistance.current = info.offset.x
-            }}
-            onDragEnd={handleDragEnd}
-            onTap={() => {
-              if (swiping.current) return
-              if (Math.abs(dragDistance.current) < 12) {
-                onSelect(front.mood)
-              }
-            }}
-            aria-label={`Choose mood ${moodLabel(front.mood)}`}
-          >
-            <MoodCard card={front} />
-          </motion.button>
+            <motion.button
+              key={front.mood}
+              type="button"
+              className="absolute inset-0 z-10 cursor-grab overflow-visible appearance-none border-0 bg-transparent p-0 text-left active:cursor-grabbing"
+              style={{ x, rotate, touchAction: 'none' }}
+              drag="x"
+              dragElastic={0}
+              dragMomentum={false}
+              onDragStart={() => {
+                dragDistance.current = 0
+              }}
+              onDrag={(_, info) => {
+                dragDistance.current = info.offset.x
+              }}
+              onDragEnd={handleDragEnd}
+              onTap={() => {
+                if (swiping.current) return
+                if (Math.abs(dragDistance.current) < 12) {
+                  onSelect(front.mood)
+                }
+              }}
+              aria-label={`Choose mood ${moodLabel(front.mood)}`}
+            >
+              <MoodCard card={front} />
+            </motion.button>
+          </div>
+          <div className="min-h-0 flex-1" />
         </div>
 
         <Link
           href="/backlog"
-          className="absolute inset-x-0 bottom-[64px] w-full rounded-xl bg-accent py-3.5 text-center text-base font-semibold text-white transition duration-150 hover:brightness-110 active:scale-95"
+          className="w-full shrink-0 rounded-xl bg-accent py-3.5 text-center text-base font-semibold text-white transition duration-150 hover:brightness-110 active:scale-95"
         >
           View Full Backlog
         </Link>
