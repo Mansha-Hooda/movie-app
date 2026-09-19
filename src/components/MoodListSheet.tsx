@@ -55,31 +55,32 @@ export function MoodListSheet({
   }
 
   return (
-    <motion.div
-      className="fixed inset-0 z-50 flex flex-col justify-end bg-black/80"
-      initial={{ y: '100%' }}
-      animate={{ y: 0 }}
-      exit={{ y: '100%' }}
-      transition={SHEET_SPRING}
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={{ top: 0.02, bottom: 0.55 }}
-      dragMomentum={false}
-      onDragEnd={handleDragEnd}
-    >
-      <button
+    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+      <motion.button
         type="button"
         aria-label="Close mood list"
-        className="min-h-0 flex-1"
+        className="absolute inset-0 bg-black/80"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         onClick={onClose}
       />
 
-      <div
+      <motion.div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="mx-auto flex w-full max-h-[60svh] max-w-lg flex-col rounded-t-2xl bg-black px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-lg"
-        onClick={(event) => event.stopPropagation()}
+        className="relative mx-auto flex w-full max-h-[60svh] max-w-lg flex-col rounded-t-2xl bg-black px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-lg"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={SHEET_SPRING}
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0.02, bottom: 0.55 }}
+        dragMomentum={false}
+        onDragEnd={handleDragEnd}
       >
         <button
           type="button"
@@ -138,7 +139,7 @@ export function MoodListSheet({
             )
           })}
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   )
 }
