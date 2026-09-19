@@ -155,6 +155,10 @@ export function MoodPickerOverlay({
     swiping.current = true
     const direction = info.offset.x + info.velocity.x > 0 ? 1 : -1
     await animate(x, direction * 640, EXIT)
+    if (direction > 0) {
+      onSelect(front.mood)
+      return
+    }
     advance()
   }
 
