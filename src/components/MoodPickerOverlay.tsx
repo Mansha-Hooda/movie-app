@@ -75,10 +75,8 @@ export function MoodPickerOverlay({
   }, [])
 
   useLayoutEffect(() => {
-    const node = viewportRef.current
-    if (!node) return
-
     function measure() {
+      const node = viewportRef.current
       if (!node) return
       const viewport = node.getBoundingClientRect().width
       const nextCardW = Math.min(HEADING_MAX_PX, Math.max(0, viewport - SIDE_INSET))
@@ -86,9 +84,11 @@ export function MoodPickerOverlay({
       setCardW(nextCardW)
     }
 
+    const observed = viewportRef.current
+    if (!observed) return
     measure()
     const observer = new ResizeObserver(measure)
-    observer.observe(node)
+    observer.observe(observed)
     return () => observer.disconnect()
   }, [])
 
