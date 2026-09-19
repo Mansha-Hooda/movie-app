@@ -319,7 +319,7 @@ export function TitleForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <span className="mb-2 block text-sm text-muted">Type</span>
-        <div className="flex rounded-2xl bg-surface p-1">
+        <div className="flex rounded-[999px] bg-surface p-1">
           {MEDIA_TYPES.map((option) => {
             const selected = mediaType === option.value
             return (
@@ -327,7 +327,7 @@ export function TitleForm({
                 key={option.value}
                 type="button"
                 onClick={() => setMediaType(option.value)}
-                className={`flex-1 rounded-xl py-2.5 text-sm transition duration-150 ${
+                className={`flex-1 rounded-[999px] py-2.5 text-sm transition duration-150 ${
                   selected ? 'bg-white font-medium text-ink' : 'text-white/70'
                 }`}
               >
