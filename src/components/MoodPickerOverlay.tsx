@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import {
   animate,
   motion,
@@ -15,6 +14,7 @@ import { hexToRgba, type MoodCardData } from '@/lib/moods/picker'
 type MoodPickerOverlayProps = {
   cards: MoodCardData[]
   onSelect: (mood: string) => void
+  onViewFullBacklog: () => void
   onDismiss: () => void
 }
 
@@ -104,6 +104,7 @@ function MoodCard({
 export function MoodPickerOverlay({
   cards,
   onSelect,
+  onViewFullBacklog,
   onDismiss,
 }: MoodPickerOverlayProps) {
   const [index, setIndex] = useState(0)
@@ -221,12 +222,13 @@ export function MoodPickerOverlay({
           <div className="min-h-0 flex-1" />
         </div>
 
-        <Link
-          href="/backlog"
+        <button
+          type="button"
+          onClick={onViewFullBacklog}
           className="w-full shrink-0 rounded-xl bg-accent py-3.5 text-center text-base font-semibold text-white transition duration-150 hover:brightness-110 active:scale-95"
         >
           View Full Backlog
-        </Link>
+        </button>
       </div>
     </div>
   )

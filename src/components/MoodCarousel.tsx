@@ -8,9 +8,10 @@ type MoodCarouselProps = {
   moods: string[]
   value: string
   onChange: (mood: string) => void
+  onOpenList?: () => void
 }
 
-export function MoodCarousel({ moods, value, onChange }: MoodCarouselProps) {
+export function MoodCarousel({ moods, value, onChange, onOpenList }: MoodCarouselProps) {
   const index = Math.max(0, moods.indexOf(value))
   const [slide, setSlide] = useState<'idle' | 'out-left' | 'out-right' | 'in'>('idle')
 
@@ -46,11 +47,15 @@ export function MoodCarousel({ moods, value, onChange }: MoodCarouselProps) {
         >
           <ChevronLeft className="h-6 w-6" />
         </button>
-        <h2
+        <button
+          type="button"
+          onClick={onOpenList}
           className={`min-w-0 flex-1 text-2xl font-medium tracking-tight text-fg transition-all duration-150 ease-out sm:text-3xl ${motionClass}`}
+          aria-haspopup="dialog"
+          aria-label="Choose mood"
         >
           {moodLabel(value)}
-        </h2>
+        </button>
         <button
           type="button"
           onClick={() => cycle(1)}

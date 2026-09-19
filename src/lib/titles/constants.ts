@@ -8,8 +8,10 @@ export const MEDIA_TYPES: { value: MediaType; label: string }[] = [
 
 export const MOOD_TAGS = ['cozy', 'sad', 'mindfuck', 'brainrot'] as const
 
-/** Home carousel sentinel: not stored on titles. */
 export const ALL_MOOD = 'all'
+
+/** Home carousel sentinel: watched titles, not stored on titles. */
+export const WATCHED_MOOD = 'watched'
 
 export type MoodTag = (typeof MOOD_TAGS)[number]
 

@@ -75,7 +75,7 @@ export function TitleCard({ title, onOpen, onDelete }: TitleCardProps) {
               setMenuOpen((open) => !open)
               setConfirmDelete(false)
             }}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-white transition duration-150 hover:border-fg/35 active:scale-95 [&_svg]:text-white"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-white transition duration-150 hover:bg-page active:scale-95 [&_svg]:text-white"
           >
             <MoreVertical className="h-4 w-4" strokeWidth={1.75} />
           </button>
