@@ -10,8 +10,7 @@ import {
   type PanInfo,
 } from 'framer-motion'
 import { moodLabel } from '@/lib/titles/moods'
-import { hexToRgba, type MoodCardData } from '@/lib/moods/picker'
-import { FIGMA_GLASS } from '@/lib/moods/figmaGlass'
+import type { MoodCardData } from '@/lib/moods/picker'
 
 type MoodPickerOverlayProps = {
   cards: MoodCardData[]
@@ -25,26 +24,21 @@ const SNAP_BACK = { type: 'tween' as const, duration: 0.22, ease: [0.4, 0, 0.2, 
 const EXIT = { type: 'tween' as const, duration: 0.22, ease: [0.4, 0, 1, 1] as const }
 
 function peekPose(depth: number) {
-  if (depth === 1) {
-    return { rotate: 0, x: 0, y: 0 }
-  }
-  return {
-    rotate: depth % 2 === 0 ? 10 : -10,
-    x: depth % 2 === 0 ? 18 : -18,
-    y: 12,
-  }
+  if (depth <= 1) return { rotate: 0, x: 0, y: 0 }
+  if (depth === 2) return { rotate: 10, x: 28, y: 10 }
+  return { rotate: -10, x: -28, y: 10 }
 }
 
 const POSTER_FAN = [
-  [{ z: 3, rotate: 0, x: 0 }],
+  [{ z: 3, rotate: 0, x: 0, y: 0 }],
   [
-    { z: 1, rotate: -12, x: -22 },
-    { z: 2, rotate: 12, x: 22 },
+    { z: 1, rotate: -18, x: -42, y: 14 },
+    { z: 2, rotate: 18, x: 42, y: 14 },
   ],
   [
-    { z: 1, rotate: -16, x: -36 },
-    { z: 3, rotate: 0, x: 0 },
-    { z: 2, rotate: 14, x: 36 },
+    { z: 1, rotate: -20, x: -52, y: 18 },
+    { z: 3, rotate: 0, x: 0, y: -6 },
+    { z: 2, rotate: 20, x: 52, y: 18 },
   ],
 ] as const
 
@@ -54,15 +48,15 @@ function PosterFan({ posters }: { posters: (string | null)[] }) {
   if (!layout) return null
 
   return (
-    <div className="relative mx-auto h-[9.75rem] w-[11.5rem]">
+    <div className="relative mx-auto h-[12.5rem] w-[15rem]">
       {layout.map((style, index) => (
         <div
           key={urls[index]}
-          className="absolute top-1/2 left-1/2 w-[5.4rem] overflow-hidden rounded-xl bg-surface shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
+          className="absolute top-1/2 left-1/2 w-[6.1rem] overflow-hidden rounded-[1.35rem] bg-surface shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
           style={{
             zIndex: style.z,
             aspectRatio: '2 / 3',
-            transform: `translate(-50%, -50%) translateX(${style.x}px) rotate(${style.rotate}deg)`,
+            transform: `translate(-50%, -50%) translate(${style.x}px, ${style.y}px) rotate(${style.rotate}deg)`,
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -78,16 +72,7 @@ function PosterFan({ posters }: { posters: (string | null)[] }) {
   )
 }
 
-function glassStyle(color: string) {
-  const frost = `blur(${FIGMA_GLASS.frost}px)`
-  return {
-    background: hexToRgba(color, 0.6),
-    backdropFilter: frost,
-    WebkitBackdropFilter: frost,
-  }
-}
-
-function GlassCard({
+function MoodCard({
   card,
   peek = false,
 }: {
@@ -95,17 +80,21 @@ function GlassCard({
   peek?: boolean
 }) {
   return (
-    <div className="mood-glass-card h-full w-full" style={glassStyle(card.color)}>
-      {peek ? null : (
-        <div className="flex h-full flex-col px-5 pt-6 pb-5">
-          <h3 className="text-center text-[1.3rem] font-bold tracking-tight text-white">
-            {moodLabel(card.mood)}
-          </h3>
-          <div className="flex flex-1 items-center justify-center">
-            <PosterFan posters={card.posters} />
+    <div className="mood-card-slot">
+      <div className="mood-card-color-peek mood-card-color-peek--left" />
+      <div className="mood-card-color-peek mood-card-color-peek--right" />
+      <div className="mood-card">
+        {peek ? null : (
+          <div className="relative z-[1] flex h-full flex-col px-5 pt-6 pb-5">
+            <h3 className="text-center text-[1.3rem] font-bold tracking-tight text-white">
+              {moodLabel(card.mood)}
+            </h3>
+            <div className="flex flex-1 items-center justify-center">
+              <PosterFan posters={card.posters} />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
@@ -172,25 +161,25 @@ export function MoodPickerOverlay({
   }
 
   return (
-    <div className="fixed inset-0 z-[80] bg-black px-8">
-      <div className="relative mx-auto flex h-full w-full max-w-[18.5rem] flex-col items-center justify-center">
+    <div className="fixed inset-0 z-[80] px-8" style={{ background: '#1C1C1E' }}>
+      <div className="relative mx-auto flex h-full w-full max-w-[18.5rem] flex-col items-center justify-center overflow-visible">
         <h2 className="mb-8 w-full text-center text-[1.85rem] font-bold leading-[1.2] tracking-tight text-white">
           Welcome back, what&apos;s your mood for today?
         </h2>
 
-        <div className="relative h-[19.5rem] w-[15.25rem]">
-          {remaining.slice(1, 3).map((card, offset) => {
+        <div className="relative h-[17rem] w-[17rem] overflow-visible">
+          {remaining.slice(1, 4).map((card, offset) => {
             const depth = offset + 1
             return (
               <motion.div
                 key={card.mood}
-                className="absolute inset-0"
-                style={{ zIndex: 3 - depth }}
+                className="absolute inset-0 overflow-visible"
+                style={{ zIndex: 4 - depth }}
                 initial={false}
                 animate={peekPose(depth)}
                 transition={SNAP_BACK}
               >
-                <GlassCard card={card} peek />
+                <MoodCard card={card} peek />
               </motion.div>
             )
           })}
@@ -198,7 +187,7 @@ export function MoodPickerOverlay({
           <motion.button
             key={front.mood}
             type="button"
-            className="absolute inset-0 z-10 cursor-grab touch-none appearance-none border-0 bg-transparent p-0 text-left active:cursor-grabbing"
+            className="absolute inset-0 z-10 cursor-grab overflow-visible appearance-none border-0 bg-transparent p-0 text-left active:cursor-grabbing"
             style={{ x, rotate, touchAction: 'none' }}
             drag="x"
             dragElastic={0}
@@ -218,13 +207,13 @@ export function MoodPickerOverlay({
             }}
             aria-label={`Choose mood ${moodLabel(front.mood)}`}
           >
-            <GlassCard card={front} />
+            <MoodCard card={front} />
           </motion.button>
         </div>
 
         <Link
           href="/backlog"
-          className="btn-primary absolute inset-x-0 bottom-[64px] w-full"
+          className="absolute inset-x-0 bottom-[64px] w-full rounded-xl bg-accent py-3.5 text-center text-base font-semibold text-white transition duration-150 hover:brightness-110 active:scale-95"
         >
           View Full Backlog
         </Link>
