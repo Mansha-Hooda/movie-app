@@ -80,21 +80,17 @@ function MoodCard({
   peek?: boolean
 }) {
   return (
-    <div className="mood-card-slot">
-      <div className="mood-card-color-peek mood-card-color-peek--left" />
-      <div className="mood-card-color-peek mood-card-color-peek--right" />
-      <div className="mood-card">
-        {peek ? null : (
-          <div className="relative z-[1] flex h-full flex-col px-5 pt-6 pb-5">
-            <h3 className="text-center text-[1.3rem] font-bold tracking-tight text-white">
-              {moodLabel(card.mood)}
-            </h3>
-            <div className="flex flex-1 items-center justify-center">
-              <PosterFan posters={card.posters} />
-            </div>
+    <div className="mood-card">
+      {peek ? null : (
+        <div className="relative z-[1] flex h-full flex-col px-5 pt-6 pb-5">
+          <h3 className="text-center text-[1.3rem] font-bold tracking-tight text-white">
+            {moodLabel(card.mood)}
+          </h3>
+          <div className="flex flex-1 items-center justify-center">
+            <PosterFan posters={card.posters} />
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -162,12 +158,12 @@ export function MoodPickerOverlay({
 
   return (
     <div className="fixed inset-0 z-[80] px-8" style={{ background: '#1C1C1E' }}>
-      <div className="relative mx-auto flex h-full w-full max-w-[18.5rem] flex-col items-center justify-center overflow-visible">
+      <div className="relative mx-auto flex h-full w-full max-w-[18.5rem] flex-col items-center overflow-visible pt-[64px]">
         <h2 className="mb-8 w-full text-center text-[1.85rem] font-bold leading-[1.2] tracking-tight text-white">
           Welcome back, what&apos;s your mood for today?
         </h2>
 
-        <div className="relative h-[17rem] w-[17rem] overflow-visible">
+        <div className="relative h-[19.5rem] w-[15.25rem] overflow-visible">
           {remaining.slice(1, 4).map((card, offset) => {
             const depth = offset + 1
             return (
