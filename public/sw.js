@@ -76,6 +76,7 @@ async function handleShareTarget(request) {
     const formData = await request.formData()
     const file =
       formData.get('image') ||
+      formData.get('video') ||
       formData.get('file') ||
       formData.get('media') ||
       [...formData.values()].find((value) => value instanceof Blob && value.size > 0)

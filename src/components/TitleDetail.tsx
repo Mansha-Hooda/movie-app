@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { motion, type PanInfo } from 'framer-motion'
+import { motion } from 'framer-motion'
+import { BottomSheet } from '@/components/BottomSheet'
 import { createClient } from '@/lib/supabase/client'
 import { updateTitleStatus } from '@/lib/titles/api'
 import { commitmentLabel, formatAddedDate, MEDIA_TYPES } from '@/lib/titles/constants'
@@ -37,21 +38,6 @@ export function TitleDetail({ title, onClose, onUpdate }: TitleDetailProps) {
   const [year, setYear] = useState<string | null>(null)
 
   useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose()
-    }
-
-    window.addEventListener('keydown', onKeyDown)
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
-    return () => {
-      window.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = previousOverflow
-    }
-  }, [onClose])
-
-  useEffect(() => {
     let cancelled = false
 
     async function loadYear() {
@@ -75,12 +61,6 @@ export function TitleDetail({ title, onClose, onUpdate }: TitleDetailProps) {
       cancelled = true
     }
   }, [title])
-
-  function handleDragEnd(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
-    if (info.offset.y > 110 || info.velocity.y > 700) {
-      onClose()
-    }
-  }
 
   async function handleMarkDone() {
     if (updating) return
@@ -107,29 +87,8 @@ export function TitleDetail({ title, onClose, onUpdate }: TitleDetailProps) {
     title.mood_tags.length > 0 ? title.mood_tags.map(moodLabel).join(', ') : null
 
   return (
-    <motion.div
-      className="fixed inset-0 z-50 flex flex-col bg-page"
-      initial={{ y: '100%' }}
-      animate={{ y: 0 }}
-      exit={{ y: '100%' }}
-      transition={PLAYER_SPRING}
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={{ top: 0.02, bottom: 0.55 }}
-      dragMomentum={false}
-      onDragEnd={handleDragEnd}
-      onClick={onClose}
-    >
-      <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="flex w-full flex-col items-center pt-3 pb-1"
-        >
-          <span className="h-1 w-10 rounded-full bg-muted" />
-        </button>
-
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-6 pb-10">
+    <BottomSheet onClose={onClose}>
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pb-4">
         <motion.div
           className="mx-auto flex w-full max-w-sm flex-1 items-center justify-center py-4"
           initial={{ scale: 0.88, opacity: 0.65 }}
@@ -169,8 +128,7 @@ export function TitleDetail({ title, onClose, onUpdate }: TitleDetailProps) {
           <button
             type="button"
             disabled={updating}
-            onClick={(event) => {
-              event.stopPropagation()
+            onClick={() => {
               void handleMarkDone()
             }}
             className="btn-primary mt-6 w-full py-3"
@@ -189,7 +147,7 @@ export function TitleDetail({ title, onClose, onUpdate }: TitleDetailProps) {
           </div>
         </motion.div>
       </div>
-    </motion.div>
+    </BottomSheet>
   )
 }
 

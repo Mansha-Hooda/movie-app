@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useId, useState } from 'react'
+import { useId, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { AnimatePresence } from 'framer-motion'
 import { CircleUser } from 'lucide-react'
+import { BottomSheet } from '@/components/BottomSheet'
 import { createClient } from '@/lib/supabase/client'
 
 type AppHeaderProps = {
@@ -14,23 +16,6 @@ export function AppHeader({ email }: AppHeaderProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const titleId = useId()
-
-  useEffect(() => {
-    if (!open) return
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false)
-    }
-
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    document.addEventListener('keydown', onKeyDown)
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open])
 
   async function handleLogout() {
     setOpen(false)
@@ -59,22 +44,9 @@ export function AppHeader({ email }: AppHeaderProps) {
         <CircleUser className="h-5 w-5" strokeWidth={1.75} />
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50">
-          <button
-            type="button"
-            aria-label="Close account menu"
-            className="absolute inset-0 bg-page/70"
-            onClick={() => setOpen(false)}
-          />
-
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            className="absolute inset-x-0 bottom-0 mx-auto max-w-lg rounded-t-2xl bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-lg"
-          >
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+      <AnimatePresence>
+        {open ? (
+          <BottomSheet key="account-sheet" labelledBy={titleId} onClose={() => setOpen(false)}>
             <h2 id={titleId} className="sr-only">
               Account
             </h2>
@@ -99,9 +71,9 @@ export function AppHeader({ email }: AppHeaderProps) {
             >
               Log out
             </button>
-          </div>
-        </div>
-      )}
+          </BottomSheet>
+        ) : null}
+      </AnimatePresence>
     </header>
   )
 }

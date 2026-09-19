@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { AnimatePresence } from 'framer-motion'
 import { TitleCard } from '@/components/TitleCard'
 import type { Title } from '@/types/database'
 
@@ -93,13 +94,16 @@ export function TitleGrid({
         ))}
       </div>
 
-      {selectedTitle ? (
-        <TitleDetail
-          title={selectedTitle}
-          onClose={closeDetail}
-          onUpdate={onTitleUpdate}
-        />
-      ) : null}
+      <AnimatePresence>
+        {selectedTitle ? (
+          <TitleDetail
+            key={selectedTitle.id}
+            title={selectedTitle}
+            onClose={closeDetail}
+            onUpdate={onTitleUpdate}
+          />
+        ) : null}
+      </AnimatePresence>
     </>
   )
 }

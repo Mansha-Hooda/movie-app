@@ -4,17 +4,17 @@
   "description": "Capture and surface movie, show, and book recommendations.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#121014",
+  "background_color": "#000000",
   "theme_color": "#6C00F8",
   "icons": [
     {
-      "src": "/pwa-splash-192.png",
+      "src": "/pwa-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/pwa-splash-512.png",
+      "src": "/pwa-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
@@ -44,6 +44,10 @@
         {
           "name": "image",
           "accept": ["image/*"]
+        },
+        {
+          "name": "media",
+          "accept": ["image/*", "video/*"]
         }
       ]
     }

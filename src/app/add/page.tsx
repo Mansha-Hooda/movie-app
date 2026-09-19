@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import { X } from 'lucide-react'
+import { CloseToHome } from '@/components/CloseToHome'
 import { TitleForm } from '@/components/TitleForm'
 import { fetchUserTitles } from '@/lib/titles/api'
 import { getSessionUser } from '@/lib/supabase/session'
@@ -37,13 +36,7 @@ export default async function AddPage({ searchParams }: AddPageProps) {
   return (
     <main className="mx-auto max-w-md px-5 pb-12 pt-4">
       <header className="relative mb-8 flex items-center justify-center">
-        <Link
-          href="/"
-          aria-label="Close"
-          className="absolute left-0 flex h-10 w-10 items-center justify-center text-fg"
-        >
-          <X className="h-6 w-6" strokeWidth={1.75} />
-        </Link>
+        <CloseToHome />
         <h1 className="text-lg font-semibold text-fg">Add title</h1>
       </header>
       <TitleForm
