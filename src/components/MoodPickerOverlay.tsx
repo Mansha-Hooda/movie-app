@@ -28,11 +28,15 @@ const SWIPE_VELOCITY = 650
 const SNAP_BACK = { type: 'tween' as const, duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }
 const EXIT = { type: 'tween' as const, duration: 0.22, ease: [0.4, 0, 1, 1] as const }
 
-function peekTransform(absoluteIndex: number) {
-  if (absoluteIndex % 2 === 0) {
-    return 'translate(-18px, 10px) rotate(-10deg)'
+function peekPose(depth: number) {
+  if (depth === 1) {
+    return { rotate: 0, x: 0, y: 0 }
   }
-  return 'translate(18px, 12px) rotate(10deg)'
+  return {
+    rotate: depth % 2 === 0 ? 10 : -10,
+    x: depth % 2 === 0 ? 18 : -18,
+    y: 12,
+  }
 }
 
 const POSTER_FAN = [
@@ -162,8 +166,6 @@ export function MoodPickerOverlay({
 
   const remaining = cards.slice(index)
   const front = remaining[0]
-  const firstBehind = remaining[1]
-  const secondBehind = remaining[2]
 
   function advance() {
     const next = index + 1
@@ -211,23 +213,21 @@ export function MoodPickerOverlay({
             radius={CARD_RADIUS}
             filterId={filterId}
           />
-          {secondBehind ? (
-            <div
-              className="absolute inset-0"
-              style={{ zIndex: 1, transform: peekTransform(index + 2) }}
-            >
-              <GlassCard card={secondBehind} peek filterId={filterId} />
-            </div>
-          ) : null}
-
-          {firstBehind ? (
-            <div
-              className="absolute inset-0"
-              style={{ zIndex: 2, transform: peekTransform(index + 1) }}
-            >
-              <GlassCard card={firstBehind} peek filterId={filterId} />
-            </div>
-          ) : null}
+          {remaining.slice(1, 3).map((card, offset) => {
+            const depth = offset + 1
+            return (
+              <motion.div
+                key={card.mood}
+                className="absolute inset-0"
+                style={{ zIndex: 3 - depth }}
+                initial={false}
+                animate={peekPose(depth)}
+                transition={SNAP_BACK}
+              >
+                <GlassCard card={card} peek filterId={filterId} />
+              </motion.div>
+            )
+          })}
 
           <motion.button
             key={front.mood}
