@@ -4,6 +4,7 @@ export type MoodCardData = {
   mood: string
   posters: (string | null)[]
   color: string
+  count: number
 }
 
 /** Distinct purples around the primary accent, assigned uniquely per mood. */
@@ -79,13 +80,13 @@ export function collectMoodCards(titles: Title[]): MoodCardData[] {
       if (seen.has(title.id)) continue
       seen.add(title.id)
       unique.push(title)
-      if (unique.length === 3) break
     }
 
     cards.push({
       mood,
-      posters: newestPosterUrls(unique),
+      posters: newestPosterUrls(unique.slice(0, 3)),
       color: '',
+      count: unique.length,
     })
   }
 

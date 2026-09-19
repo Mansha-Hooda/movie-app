@@ -1,13 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import {
-  animate,
-  motion,
-  useMotionValue,
-  useTransform,
-  type PanInfo,
-} from 'framer-motion'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { animate, motion, useMotionValue, type PanInfo } from 'framer-motion'
 import { moodLabel } from '@/lib/titles/moods'
 import { hexToRgba, type MoodCardData } from '@/lib/moods/picker'
 import { PosterFan } from '@/components/PosterFan'
@@ -19,42 +13,39 @@ type MoodPickerOverlayProps = {
   onDismiss: () => void
 }
 
-const SWIPE_OFFSET = 96
-const SWIPE_VELOCITY = 650
-const SNAP_BACK = { type: 'tween' as const, duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }
-const EXIT = { type: 'tween' as const, duration: 0.22, ease: [0.4, 0, 1, 1] as const }
-
-function peekPose(depth: number) {
-  if (depth <= 1) return { rotate: 0, x: 0, y: 0 }
-  if (depth === 2) return { rotate: 10, x: 28, y: 10 }
-  return { rotate: -10, x: -28, y: 10 }
-}
+const CARD_ASPECT = 15.25 / 19.5
+const GAP = 12
+const HEADING_MAX_PX = 18.5 * 16
+const SIDE_INSET = 64
+const SNAP = { type: 'spring' as const, stiffness: 380, damping: 36, mass: 0.85 }
+const ACTIVE_FILL = '#7A5AF8'
+const PEEK_FILL = '#B8A9FC'
+const TAP_SLOP = 10
 
 function MoodCard({
   card,
-  peek = false,
+  active,
 }: {
   card: MoodCardData
-  peek?: boolean
+  active: boolean
 }) {
+  const hex = active ? ACTIVE_FILL : PEEK_FILL
   return (
     <div
       className="mood-card"
       style={{
-        ['--mood-fill' as string]: hexToRgba(card.color, 0.7),
-        ['--mood-fill-fallback' as string]: hexToRgba(card.color, 0.85),
+        ['--mood-fill' as string]: hexToRgba(hex, active ? 0.7 : 0.48),
+        ['--mood-fill-fallback' as string]: hexToRgba(hex, active ? 0.85 : 0.62),
       }}
     >
-      {peek ? null : (
-        <div className="relative z-[1] flex h-full flex-col px-5 pt-6 pb-5">
-          <h3 className="text-center text-[1.3rem] font-bold tracking-tight text-white">
-            {moodLabel(card.mood)}
-          </h3>
-          <div className="flex flex-1 items-center justify-center">
-            <PosterFan posters={card.posters} />
-          </div>
+      <div className="relative z-[1] flex h-full flex-col px-5 pt-6 pb-5">
+        <h3 className="text-center text-[1.3rem] font-bold tracking-tight text-white">
+          {moodLabel(card.mood)}
+        </h3>
+        <div className="flex flex-1 items-center justify-center">
+          <PosterFan posters={card.posters} />
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -63,13 +54,15 @@ export function MoodPickerOverlay({
   cards,
   onSelect,
   onViewFullBacklog,
-  onDismiss,
 }: MoodPickerOverlayProps) {
   const [index, setIndex] = useState(0)
+  const [cardW, setCardW] = useState(HEADING_MAX_PX)
+  const [viewportW, setViewportW] = useState(HEADING_MAX_PX)
+  const viewportRef = useRef<HTMLDivElement>(null)
   const x = useMotionValue(0)
-  const rotate = useTransform(x, [-280, 0, 280], [-12, 0, 12])
   const dragDistance = useRef(0)
   const swiping = useRef(false)
+  const indexRef = useRef(0)
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -81,101 +74,127 @@ export function MoodPickerOverlay({
     }
   }, [])
 
-  useEffect(() => {
-    x.set(0)
-    swiping.current = false
-  }, [index, x])
+  useLayoutEffect(() => {
+    const node = viewportRef.current
+    if (!node) return
 
-  const remaining = cards.slice(index)
-  const front = remaining[0]
-
-  function advance() {
-    const next = index + 1
-    if (next >= cards.length) {
-      onDismiss()
-      return
+    function measure() {
+      const viewport = node.getBoundingClientRect().width
+      const nextCardW = Math.min(HEADING_MAX_PX, Math.max(0, viewport - SIDE_INSET))
+      setViewportW(viewport)
+      setCardW(nextCardW)
     }
-    setIndex(next)
+
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
+  const step = cardW + GAP
+  const pad = Math.max(0, (viewportW - cardW) / 2)
+  const minX = -Math.max(0, cards.length - 1) * step
+
+  useLayoutEffect(() => {
+    x.set(-indexRef.current * step)
+  }, [step, x])
+
+  function snapTo(next: number, info?: PanInfo) {
+    const clamped = Math.max(0, Math.min(cards.length - 1, next))
+    indexRef.current = clamped
+    setIndex(clamped)
+    void animate(x, -clamped * step, SNAP)
+    if (info && Math.abs(info.offset.x) > TAP_SLOP) {
+      swiping.current = true
+    }
   }
 
-  async function handleDragEnd(
-    _: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo,
-  ) {
-    const shouldSwipe =
-      Math.abs(info.offset.x) > SWIPE_OFFSET ||
-      Math.abs(info.velocity.x) > SWIPE_VELOCITY
-
-    if (!shouldSwipe) {
-      void animate(x, 0, SNAP_BACK)
-      return
+  function handleDragEnd(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
+    const current = -x.get() / Math.max(step, 1)
+    let next = Math.round(current)
+    if (info.velocity.x < -500) next += 1
+    else if (info.velocity.x > 500) next -= 1
+    else {
+      const projected = x.get() + info.velocity.x * 0.18
+      next = Math.round(-projected / Math.max(step, 1))
     }
-
-    swiping.current = true
-    const direction = info.offset.x + info.velocity.x > 0 ? 1 : -1
-    await animate(x, direction * 640, EXIT)
-    if (direction > 0) {
-      onSelect(front.mood)
-      return
-    }
-    advance()
+    snapTo(next, info)
   }
 
-  if (!front) {
+  const active = cards[index]
+  if (!active) {
     return null
   }
 
   return (
-    <div className="fixed inset-0 z-[80] px-8" style={{ background: '#1C1C1E' }}>
-      <div className="relative mx-auto flex h-full w-full max-w-[18.5rem] flex-col items-center overflow-visible pt-[64px] pb-[64px]">
+    <div className="fixed inset-0 z-[80] overflow-x-hidden" style={{ background: '#1C1C1E' }}>
+      <div className="relative mx-auto flex h-full w-[min(18.5rem,calc(100vw-4rem))] flex-col items-center overflow-visible pt-[64px] pb-[64px]">
         <h2 className="w-full shrink-0 text-center text-[1.85rem] font-bold leading-[1.2] tracking-tight text-white">
           Welcome back, what&apos;s your mood for today?
         </h2>
 
         <div className="flex min-h-0 w-full flex-1 flex-col">
           <div className="min-h-0 flex-1" />
-          <div className="relative mx-auto h-[19.5rem] w-[15.25rem] shrink-0 overflow-visible">
-            {remaining.slice(1, 4).map((card, offset) => {
-              const depth = offset + 1
-              return (
-                <motion.div
-                  key={card.mood}
-                  className="absolute inset-0 overflow-visible"
-                  style={{ zIndex: 4 - depth }}
-                  initial={false}
-                  animate={peekPose(depth)}
-                  transition={SNAP_BACK}
-                >
-                  <MoodCard card={card} peek />
-                </motion.div>
-              )
-            })}
+          <div className="w-full shrink-0">
+            <div ref={viewportRef} className="relative overflow-x-hidden" style={{ width: '100vw', marginLeft: 'calc(50% - 50vw)' }}>
+              <motion.div
+                className="flex cursor-grab items-stretch active:cursor-grabbing"
+                style={{ x, gap: GAP, paddingLeft: pad, paddingRight: pad, touchAction: 'none' }}
+                drag={cards.length > 1 ? 'x' : false}
+                dragConstraints={{ left: minX, right: 0 }}
+                dragElastic={0.12}
+                dragMomentum={false}
+                onDragStart={() => {
+                  dragDistance.current = 0
+                  swiping.current = false
+                }}
+                onDrag={(_, info) => {
+                  dragDistance.current = info.offset.x
+                  const nearest = Math.round(-x.get() / Math.max(step, 1))
+                  const clamped = Math.max(0, Math.min(cards.length - 1, nearest))
+                  if (clamped !== indexRef.current) {
+                    indexRef.current = clamped
+                    setIndex(clamped)
+                  }
+                }}
+                onDragEnd={handleDragEnd}
+              >
+                {cards.map((card, i) => (
+                  <motion.button
+                    key={card.mood}
+                    type="button"
+                    className="shrink-0 appearance-none border-0 bg-transparent p-0 text-left"
+                    style={{ width: cardW, aspectRatio: CARD_ASPECT }}
+                    onClick={() => {
+                      if (swiping.current) return
+                      if (Math.abs(dragDistance.current) >= TAP_SLOP) return
+                      if (i === indexRef.current) {
+                        onSelect(card.mood)
+                        return
+                      }
+                      snapTo(i)
+                    }}
+                    aria-label={`Choose mood ${moodLabel(card.mood)}`}
+                  >
+                    <MoodCard card={card} active={i === index} />
+                  </motion.button>
+                ))}
+              </motion.div>
+            </div>
 
-            <motion.button
-              key={front.mood}
-              type="button"
-              className="absolute inset-0 z-10 cursor-grab overflow-visible appearance-none border-0 bg-transparent p-0 text-left active:cursor-grabbing"
-              style={{ x, rotate, touchAction: 'none' }}
-              drag="x"
-              dragElastic={0}
-              dragMomentum={false}
-              onDragStart={() => {
-                dragDistance.current = 0
-              }}
-              onDrag={(_, info) => {
-                dragDistance.current = info.offset.x
-              }}
-              onDragEnd={handleDragEnd}
-              onTap={() => {
-                if (swiping.current) return
-                if (Math.abs(dragDistance.current) < 12) {
-                  onSelect(front.mood)
-                }
-              }}
-              aria-label={`Choose mood ${moodLabel(front.mood)}`}
-            >
-              <MoodCard card={front} />
-            </motion.button>
+            <p className="mt-4 text-center text-xs text-muted" aria-live="polite">
+              {active.count} {active.count === 1 ? 'item' : 'items'}
+            </p>
+            <div className="mt-3 flex items-center justify-center gap-1.5" aria-hidden>
+              {cards.map((card, i) => (
+                <span
+                  key={card.mood}
+                  className={`h-1.5 rounded-full transition-all duration-200 ${
+                    i === index ? 'w-5 bg-accent' : 'w-1.5 bg-border'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
           <div className="min-h-0 flex-1" />
         </div>
