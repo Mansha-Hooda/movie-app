@@ -172,13 +172,13 @@ export function MoodPickerOverlay({
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-black px-8">
-      <div className="flex w-full max-w-[18.5rem] flex-col items-center">
+    <div className="fixed inset-0 z-[80] bg-black px-8">
+      <div className="relative mx-auto flex h-full w-full max-w-[18.5rem] flex-col items-center justify-center">
         <h2 className="mb-8 w-full text-center text-[1.85rem] font-bold leading-[1.2] tracking-tight text-white">
           Welcome back, what&apos;s your mood for today?
         </h2>
 
-        <div className="relative mb-8 h-[19.5rem] w-[15.25rem]">
+        <div className="relative h-[19.5rem] w-[15.25rem]">
           {remaining.slice(1, 3).map((card, offset) => {
             const depth = offset + 1
             return (
@@ -222,7 +222,10 @@ export function MoodPickerOverlay({
           </motion.button>
         </div>
 
-        <Link href="/backlog" className="btn-primary">
+        <Link
+          href="/backlog"
+          className="btn-primary absolute inset-x-0 bottom-[64px] w-full"
+        >
           View Full Backlog
         </Link>
       </div>
