@@ -19,7 +19,7 @@ const PLAYER_SPRING = { type: 'spring' as const, stiffness: 420, damping: 38, ma
 
 function MetaRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-border py-3 last:border-b-0">
+    <div className="flex items-start justify-between gap-4 py-3">
       <span className="shrink-0 text-sm text-muted">{label}</span>
       <span className="text-right text-sm text-fg">{value}</span>
     </div>

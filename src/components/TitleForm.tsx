@@ -309,10 +309,10 @@ export function TitleForm({
     enrichment.synopsis
 
   const selectChip = (selected: boolean) =>
-    `rounded-xl border px-4 py-2 text-sm transition duration-150 active:scale-95 ${
+    `rounded-xl px-4 py-2 text-sm transition duration-150 active:scale-95 ${
       selected
-        ? 'border-white bg-white text-ink'
-        : 'border-fg/50 bg-transparent text-white'
+        ? 'bg-white text-ink'
+        : 'bg-surface text-white'
     }`
 
   return (
@@ -367,7 +367,7 @@ export function TitleForm({
 
         {dropdownOpen && results.length > 0 && (
           <ul
-            className="absolute z-10 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-border bg-surface shadow-sm"
+            className="absolute z-10 mt-1 max-h-64 w-full overflow-auto rounded-xl bg-surface shadow-sm"
             onMouseDown={(event) => event.preventDefault()}
           >
             {results.map((result) => (
@@ -408,7 +408,7 @@ export function TitleForm({
       </div>
 
       {hasEnrichment && (
-        <div className="rounded-xl border border-border bg-surface p-3 text-sm text-muted">
+        <div className="rounded-xl bg-surface p-3 text-sm text-muted">
           <div className="flex gap-3">
             {enrichment.poster_url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -513,7 +513,7 @@ export function TitleForm({
       </div>
 
       {duplicate && (
-        <div className="rounded-xl border border-border bg-surface px-3 py-2 text-sm" role="status">
+        <div className="rounded-xl bg-surface px-3 py-2 text-sm" role="status">
           <p className="text-fg">Already in your backlog</p>
           <p className="mt-0.5 text-xs text-muted">
             {duplicate.status === 'done'

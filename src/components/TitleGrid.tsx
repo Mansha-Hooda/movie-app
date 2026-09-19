@@ -62,7 +62,7 @@ export function TitleGrid({
 
   if (titles.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-8 text-center">
+      <div className="rounded-xl bg-surface p-8 text-center">
         <p className="mb-4 text-muted">{emptyMessage}</p>
         {emptyAction && (
           <Link

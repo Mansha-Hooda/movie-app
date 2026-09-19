@@ -81,7 +81,7 @@ export function TitleCard({ title, onOpen, onDelete }: TitleCardProps) {
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 bottom-11 z-20 min-w-[9.5rem] overflow-hidden rounded-lg border border-border bg-surface py-1 shadow-lg">
+            <div className="absolute right-0 bottom-11 z-20 min-w-[9.5rem] overflow-hidden rounded-lg bg-surface py-1 shadow-lg">
               {confirmDelete ? (
                 <div className="px-3 py-2">
                   <p className="mb-2 text-xs text-muted">Delete this title?</p>

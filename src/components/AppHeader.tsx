@@ -51,7 +51,7 @@ export function AppHeader({ email }: AppHeaderProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-surface text-white transition-colors duration-200 hover:border-fg/35 active:scale-95 [&_svg]:text-white"
+        className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface text-white transition-colors duration-200 hover:brightness-110 active:scale-95 [&_svg]:text-white"
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label="Account menu"
@@ -72,7 +72,7 @@ export function AppHeader({ email }: AppHeaderProps) {
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="absolute inset-x-0 bottom-0 mx-auto max-w-lg rounded-t-2xl border border-b-0 border-border bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-lg"
+            className="absolute inset-x-0 bottom-0 mx-auto max-w-lg rounded-t-2xl bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-lg"
           >
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
             <h2 id={titleId} className="sr-only">
@@ -83,7 +83,7 @@ export function AppHeader({ email }: AppHeaderProps) {
               {email || 'Signed in'}
             </p>
 
-            <div className="my-2 border-t border-border" />
+            <div className="my-2" />
 
             <Link
               href="/history"

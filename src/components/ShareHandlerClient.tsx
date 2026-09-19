@@ -487,12 +487,12 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
         <img
           src={previewUrl}
           alt="Screenshot being identified"
-          className="mx-auto max-h-64 rounded-xl border border-border bg-surface object-contain"
+          className="mx-auto max-h-64 rounded-xl bg-surface object-contain"
         />
       )}
 
       {reelUrl && inputMode === 'reel' && !previewUrl && (
-        <p className="rounded-xl border border-border bg-surface px-4 py-3 text-sm text-muted">
+        <p className="rounded-xl bg-surface px-4 py-3 text-sm text-muted">
           <span className="block text-xs uppercase tracking-wide text-accent">
             Instagram reel
           </span>
@@ -502,7 +502,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
 
       {phase === 'idle' && (
         <div className="space-y-4">
-          <div className="rounded-xl border border-border bg-surface p-6 text-center">
+          <div className="rounded-xl bg-surface p-6 text-center">
             <p className="mb-4 text-sm text-muted">
               Share a screenshot or an Instagram reel link into this app from
               Android, or use the options below to test on desktop.
@@ -518,7 +518,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
 
           <form
             onSubmit={handleLinkSubmit}
-            className="rounded-xl border border-border bg-surface p-4"
+            className="rounded-xl bg-surface p-4"
           >
             <label htmlFor="reel-link" className="mb-2 block text-sm font-medium text-fg">
               Paste a link
@@ -548,7 +548,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
       )}
 
       {phase === 'confirm' && guess && (
-        <div className="rounded-xl border border-border bg-surface p-4">
+        <div className="rounded-xl bg-surface p-4">
           <p className="mb-1 text-xs uppercase tracking-wide text-accent">
             Is this it?
           </p>
@@ -560,7 +560,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
             Confidence: {Math.round(guess.confidence * 100)}%
           </p>
           {duplicate ? (
-            <div className="mb-4 rounded-lg border border-border bg-page px-3 py-2 text-sm">
+            <div className="mb-4 rounded-lg bg-page px-3 py-2 text-sm">
               <p className="text-fg">Already in your backlog</p>
               <p className="mt-0.5 text-xs text-muted">
                 {duplicate.status === 'done'
@@ -594,14 +594,14 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
       )}
 
       {phase === 'select' && (
-        <div className="rounded-xl border border-border bg-surface p-4">
+        <div className="rounded-xl bg-surface p-4">
           <p className="mb-1 text-xs uppercase tracking-wide text-accent">
             We found {guesses.length} titles
           </p>
           <p className="mb-4 text-sm text-muted">
             Uncheck anything you don&apos;t want to add.
           </p>
-          <ul className="mb-4 divide-y divide-border overflow-hidden rounded-xl border border-border">
+          <ul className="mb-4 overflow-hidden rounded-xl bg-page">
             {guesses.map((hit) => {
               const key = titleKey(hit.name, hit.media_type)
               const already = findDuplicateInList(
@@ -674,7 +674,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
       )}
 
       {phase === 'success' && (
-        <div className="rounded-xl border border-border bg-surface p-6 text-center">
+        <div className="rounded-xl bg-surface p-6 text-center">
           <p className="text-lg font-medium text-fg">
             {addedCount === 1
               ? '1 title added to your backlog'
@@ -685,7 +685,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
       )}
 
       {phase === 'fallback' && (
-        <div className="rounded-xl border border-border bg-surface p-4">
+        <div className="rounded-xl bg-surface p-4">
           <p className="mb-2 font-medium text-fg">{fallbackTitle}</p>
           <p className="mb-4 text-sm text-muted">{fallbackBody}</p>
           <div className="flex flex-col gap-2 sm:flex-row">

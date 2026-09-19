@@ -22,7 +22,7 @@ export function UndoWatchedToast({ undo, onUndo, onDismiss }: UndoToastProps) {
 
   return (
     <div
-      className="fixed bottom-6 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-lg"
+      className="fixed bottom-6 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-xl bg-surface px-4 py-3 shadow-lg"
       role="status"
     >
       <p className="text-sm text-fg">{message}</p>

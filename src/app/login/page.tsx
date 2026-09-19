@@ -3,7 +3,7 @@ import { LoginForm } from '@/components/LoginForm'
 export default function LoginPage() {
   return (
     <main className="flex min-h-svh flex-col items-center justify-center px-6">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-6">
+      <div className="w-full max-w-sm rounded-2xl bg-surface p-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/icon.png"
