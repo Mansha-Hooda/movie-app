@@ -31,12 +31,15 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="mx-auto max-w-lg px-5 pb-24 pt-6">
-      <AppHeader email={user.email ?? ''} />
-      <Suspense fallback={<PageSkeleton showHeader={false} />}>
-        <HomeTitles userId={user.id} />
-      </Suspense>
-      <AddTitleLink />
+    <main className="relative mx-auto max-w-lg px-5 pb-24 pt-6">
+      <div className="home-ambient-glow" aria-hidden />
+      <div className="relative z-10">
+        <AppHeader email={user.email ?? ''} />
+        <Suspense fallback={<PageSkeleton showHeader={false} />}>
+          <HomeTitles userId={user.id} />
+        </Suspense>
+        <AddTitleLink />
+      </div>
     </main>
   )
 }

@@ -23,9 +23,9 @@ body.mood-picker-open [data-add-fab] {
   pointer-events: none;
 }
 
-.mood-picker-glow {
+.home-ambient-glow {
   pointer-events: none;
-  position: absolute;
+  position: fixed;
   top: -18%;
   left: 50%;
   z-index: 0;
