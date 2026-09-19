@@ -36,17 +36,28 @@ function peekPose(depth: number) {
 }
 
 const POSTER_FAN = [
-  { z: 1, rotate: -16, x: -36 },
-  { z: 3, rotate: 0, x: 0 },
-  { z: 2, rotate: 14, x: 36 },
+  [{ z: 3, rotate: 0, x: 0 }],
+  [
+    { z: 1, rotate: -12, x: -22 },
+    { z: 2, rotate: 12, x: 22 },
+  ],
+  [
+    { z: 1, rotate: -16, x: -36 },
+    { z: 3, rotate: 0, x: 0 },
+    { z: 2, rotate: 14, x: 36 },
+  ],
 ] as const
 
 function PosterFan({ posters }: { posters: (string | null)[] }) {
+  const urls = posters.filter((url): url is string => Boolean(url))
+  const layout = POSTER_FAN[urls.length - 1]
+  if (!layout) return null
+
   return (
     <div className="relative mx-auto h-[9.75rem] w-[11.5rem]">
-      {POSTER_FAN.map((style, index) => (
+      {layout.map((style, index) => (
         <div
-          key={index}
+          key={urls[index]}
           className="absolute top-1/2 left-1/2 w-[5.4rem] overflow-hidden rounded-xl bg-surface shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
           style={{
             zIndex: style.z,
@@ -54,23 +65,13 @@ function PosterFan({ posters }: { posters: (string | null)[] }) {
             transform: `translate(-50%, -50%) translateX(${style.x}px) rotate(${style.rotate}deg)`,
           }}
         >
-          {posters[index] ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={posters[index] ?? ''}
-              alt=""
-              draggable={false}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div
-              className="h-full w-full"
-              style={{
-                background:
-                  'linear-gradient(160deg, #2a2633 0%, #1c1a20 45%, #332f3d 100%)',
-              }}
-            />
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={urls[index]}
+            alt=""
+            draggable={false}
+            className="h-full w-full object-cover"
+          />
         </div>
       ))}
     </div>
