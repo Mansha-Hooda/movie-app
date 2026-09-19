@@ -40,7 +40,7 @@ export function PosterFan({ posters, variant = 'card' }: PosterFanProps) {
     <div
       className={
         isThumb
-          ? 'relative h-14 w-14 shrink-0 overflow-hidden rounded-xl'
+          ? 'relative h-full w-full'
           : 'relative mx-auto h-[12.5rem] w-[15rem]'
       }
     >

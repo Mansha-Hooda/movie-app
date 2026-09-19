@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { MediaTypeTabs, type MediaTypeTab } from '@/components/MediaTypeTabs'
 import { MoodCarousel } from '@/components/MoodCarousel'
 import { MoodListSheet } from '@/components/MoodListSheet'
@@ -154,14 +155,17 @@ export function WhatFitsNow({ userId, initialTitles }: WhatFitsNowProps) {
 
           <UndoWatchedToast undo={undo} onUndo={undoAction} onDismiss={dismissUndo} />
 
-          {moodSheetOpen ? (
-            <MoodListSheet
-              options={moodOptionsWithCounts}
-              value={mood}
-              onSelect={setMood}
-              onClose={() => setMoodSheetOpen(false)}
-            />
-          ) : null}
+          <AnimatePresence>
+            {moodSheetOpen ? (
+              <MoodListSheet
+                key="mood-sheet"
+                options={moodOptionsWithCounts}
+                value={mood}
+                onSelect={setMood}
+                onClose={() => setMoodSheetOpen(false)}
+              />
+            ) : null}
+          </AnimatePresence>
         </>
       )}
     </div>
