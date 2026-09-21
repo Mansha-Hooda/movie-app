@@ -3,8 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 /**
  * Refreshes the auth session and enforces route protection.
- * Always validates with getUser() — cookie-only getSession() can miss a
- * session that was just written by /auth/callback (PWA / magic-link hops).
+ * Always validates with getUser() so a just-verified OTP session is recognized.
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -38,9 +37,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isLoginPage = pathname === '/login'
-  const isAuthCallback = pathname.startsWith('/auth/callback')
-  const isPublicRoute = isLoginPage || isAuthCallback
+  const isPublicRoute = pathname === '/login'
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
@@ -48,7 +45,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && isLoginPage) {
+  if (user && pathname === '/login') {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)

@@ -13,6 +13,5 @@ export const config = {
     '/backlog',
     '/history',
     '/share-handler',
-    '/auth/callback',
   ],
 }
