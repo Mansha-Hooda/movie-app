@@ -4,6 +4,8 @@ import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
+const OTP_LENGTH = 6
+
 type LoginStep = 'email' | 'code'
 
 export function LoginForm() {
@@ -101,11 +103,13 @@ export function LoginForm() {
             inputMode="numeric"
             autoComplete="one-time-code"
             pattern="[0-9]*"
-            maxLength={6}
+            maxLength={OTP_LENGTH}
             required
             autoFocus
             value={token}
-            onChange={(event) => setToken(event.target.value.replace(/\D/g, '').slice(0, 6))}
+            onChange={(event) =>
+              setToken(event.target.value.replace(/\D/g, '').slice(0, OTP_LENGTH))
+            }
             placeholder="000000"
             className="field text-center text-2xl tracking-[0.4em]"
           />
@@ -119,7 +123,7 @@ export function LoginForm() {
 
         <button
           type="submit"
-          disabled={submitting || token.length !== 6}
+          disabled={submitting || token.length !== OTP_LENGTH}
           className="btn-primary w-full"
         >
           {submitting ? 'Verifying…' : 'Verify'}
