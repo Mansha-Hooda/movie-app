@@ -34,8 +34,8 @@ function MoodCard({
     <div
       className="mood-card"
       style={{
-        ['--mood-fill' as string]: hexToRgba(hex, active ? 0.7 : 0.48),
-        ['--mood-fill-fallback' as string]: hexToRgba(hex, active ? 0.85 : 0.62),
+        ['--mood-fill' as string]: hexToRgba(hex, active ? 0.6 : 0.48),
+        ['--mood-fill-fallback' as string]: hexToRgba(hex, active ? 0.6 : 0.48),
       }}
     >
       <div className="relative z-[1] flex h-full flex-col px-5 pt-6 pb-5">
