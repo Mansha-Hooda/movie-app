@@ -11,12 +11,14 @@ import {
 } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
+import { TitleMetaFields } from '@/components/TitleMetaFields'
 import type { IdentifyHit, IdentifyResult } from '@/lib/identify/types'
 import { compressImageForUpload } from '@/lib/images/compress'
 import { extractInstagramUrl } from '@/lib/reels/url'
 import { findDuplicateInList, normalizeTitleName } from '@/lib/titles/api'
-import type { MediaType, Title } from '@/types/database'
+import type { MediaType, Title, WatchLater } from '@/types/database'
 
 const SHARE_CACHE = 'share-target-v1'
 const SHARE_IMAGE_KEY = 'shared-image'
@@ -27,7 +29,14 @@ type Phase = 'idle' | 'loading' | 'confirm' | 'select' | 'saving' | 'success' | 
 type InputMode = 'screenshot' | 'reel'
 
 type ShareHandlerClientProps = {
+  userId: string
   existingTitles?: Title[]
+}
+
+type RowDetails = {
+  suggestedBy: string
+  moodTags: string[]
+  watchLater: WatchLater | null
 }
 
 type IdentifyPayload = {
@@ -127,7 +136,7 @@ function mediaLabel(type: MediaType | null | undefined) {
   return 'Unknown'
 }
 
-export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientProps) {
+export function ShareHandlerClient({ userId, existingTitles = [] }: ShareHandlerClientProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [phase, setPhase] = useState<Phase>('idle')
@@ -137,6 +146,8 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
   const [linkDraft, setLinkDraft] = useState('')
   const [guesses, setGuesses] = useState<IdentifyHit[]>([])
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set())
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
+  const [rowDetails, setRowDetails] = useState<Record<string, RowDetails>>({})
   const [addedCount, setAddedCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [errorKind, setErrorKind] = useState<
@@ -176,6 +187,8 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
 
       setGuesses(hits)
       setSelectedKeys(nextSelected)
+      setExpandedKeys(new Set())
+      setRowDetails({})
       setPhase(hits.length === 1 ? 'confirm' : 'select')
     },
     [existingTitles],
@@ -389,6 +402,35 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
     })
   }
 
+  function toggleExpanded(key: string) {
+    setExpandedKeys((current) => {
+      const next = new Set(current)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+    setRowDetails((current) => {
+      if (current[key]) return current
+      return {
+        ...current,
+        [key]: { suggestedBy: '', moodTags: [], watchLater: null },
+      }
+    })
+  }
+
+  function updateRowDetails(key: string, patch: Partial<RowDetails>) {
+    setRowDetails((current) => ({
+      ...current,
+      [key]: {
+        suggestedBy: '',
+        moodTags: [],
+        watchLater: null,
+        ...current[key],
+        ...patch,
+      },
+    }))
+  }
+
   async function handleAddSelected() {
     const selected = guesses.filter((hit) =>
       selectedKeys.has(titleKey(hit.name, hit.media_type)),
@@ -403,10 +445,18 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          titles: selected.map((hit) => ({
-            name: hit.name,
-            media_type: hit.media_type,
-          })),
+          titles: selected.map((hit) => {
+            const key = titleKey(hit.name, hit.media_type)
+            const open = expandedKeys.has(key)
+            const detail = rowDetails[key]
+            return {
+              name: hit.name,
+              media_type: hit.media_type,
+              suggested_by: open ? detail?.suggestedBy ?? '' : '',
+              mood_tags: open ? detail?.moodTags ?? [] : [],
+              ...(open && detail?.watchLater ? { time_commitment: detail.watchLater } : {}),
+            }
+          }),
         }),
       })
 
@@ -454,7 +504,7 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
 
   const loadingLabel =
     inputMode === 'reel'
-      ? 'Reading reel caption and audio…'
+      ? 'Reading this reel…'
       : 'Identifying titles…'
 
   function resetToIdle() {
@@ -636,6 +686,51 @@ export function ShareHandlerClient({ existingTitles = [] }: ShareHandlerClientPr
                       ) : null}
                     </span>
                   </label>
+                  {already ? null : (
+                    <div className="bg-page px-3 pb-3">
+                      <button
+                        type="button"
+                        onClick={() => toggleExpanded(key)}
+                        className="text-sm text-white transition-colors hover:brightness-110"
+                        aria-expanded={expandedKeys.has(key)}
+                      >
+                        {expandedKeys.has(key) ? 'Hide details' : 'Add details'}
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {expandedKeys.has(key) ? (
+                          <motion.div
+                            key="details"
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                            className="overflow-hidden"
+                          >
+                            <div className="pt-3">
+                              <TitleMetaFields
+                                userId={userId}
+                                existingTitles={existingTitles}
+                                suggestedBy={rowDetails[key]?.suggestedBy ?? ''}
+                                onSuggestedByChange={(value) =>
+                                  updateRowDetails(key, { suggestedBy: value })
+                                }
+                                moodTags={rowDetails[key]?.moodTags ?? []}
+                                onMoodTagsChange={(tags) =>
+                                  updateRowDetails(key, { moodTags: tags })
+                                }
+                                watchLater={rowDetails[key]?.watchLater ?? null}
+                                onWatchLaterChange={(value) =>
+                                  updateRowDetails(key, { watchLater: value })
+                                }
+                                idPrefix={key}
+                                allowClearCommitment
+                              />
+                            </div>
+                          </motion.div>
+                        ) : null}
+                      </AnimatePresence>
+                    </div>
+                  )}
                 </li>
               )
             })}

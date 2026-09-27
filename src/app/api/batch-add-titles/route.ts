@@ -6,7 +6,7 @@ import {
   findDuplicateInList,
   normalizeTitleName,
 } from '@/lib/titles/api'
-import type { MediaType } from '@/types/database'
+import type { MediaType, WatchLater } from '@/types/database'
 
 const MEDIA_TYPES: MediaType[] = ['movie', 'show', 'book']
 const MAX_TITLES = 25
@@ -15,10 +15,27 @@ const ENRICH_CONCURRENCY = 4
 type BatchTitleInput = {
   name?: string
   media_type?: string
+  suggested_by?: string
+  mood_tags?: string[]
+  time_commitment?: string
 }
+
+const WATCH_LATER: WatchLater[] = ['tonight', 'weekend', 'soon']
 
 function isMediaType(value: string): value is MediaType {
   return MEDIA_TYPES.includes(value as MediaType)
+}
+
+function isWatchLater(value: string): value is WatchLater {
+  return WATCH_LATER.includes(value as WatchLater)
+}
+
+type PreparedTitle = {
+  name: string
+  media_type: MediaType
+  suggested_by: string
+  mood_tags: string[] | null
+  time_commitment: WatchLater | null
 }
 
 /**
@@ -47,11 +64,24 @@ export async function POST(request: Request) {
     .map((item) => ({
       name: item.name?.trim() ?? '',
       media_type: item.media_type ?? '',
+      suggested_by: item.suggested_by?.trim() ?? '',
+      mood_tags: Array.isArray(item.mood_tags)
+        ? item.mood_tags
+            .filter((tag): tag is string => typeof tag === 'string' && Boolean(tag.trim()))
+            .map((tag) => tag.trim())
+        : null,
+      time_commitment:
+        item.time_commitment && isWatchLater(item.time_commitment)
+          ? item.time_commitment
+          : null,
     }))
     .filter((item) => item.name && isMediaType(item.media_type))
     .map((item) => ({
       name: item.name,
       media_type: item.media_type as MediaType,
+      suggested_by: item.suggested_by,
+      mood_tags: item.mood_tags,
+      time_commitment: item.time_commitment,
     }))
 
   if (incoming.length === 0) {
@@ -75,7 +105,7 @@ export async function POST(request: Request) {
   }
 
   const existing = existingRows ?? []
-  const unique: { name: string; media_type: MediaType }[] = []
+  const unique: PreparedTitle[] = []
   const seen = new Set<string>()
   let skippedDuplicates = 0
 
@@ -98,9 +128,9 @@ export async function POST(request: Request) {
     return {
       name: details.name || item.name,
       media_type: item.media_type,
-      suggested_by: '',
-      mood_tags: details.mood_tags,
-      time_commitment: 'soon' as const,
+      suggested_by: item.suggested_by,
+      mood_tags: item.mood_tags ?? details.mood_tags,
+      time_commitment: item.time_commitment ?? 'soon',
       poster_url: details.poster_url,
       genre: details.genre,
       runtime_or_pages: details.runtime_or_pages,

@@ -184,6 +184,131 @@ export async function fetchReelTranscript(reelUrl: string): Promise<string> {
   return transcriptContentToString(data.content)
 }
 
+const VISUAL_PROMPT =
+  'Identify every movie, TV show, or book title visible on screen in this video, including on-screen text, title cards, and recognizable posters. Ignore usernames, hashtags, and app interface text.'
+
+const VISUAL_SCHEMA = {
+  type: 'object',
+  properties: {
+    titles: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          media_type: { type: 'string', enum: ['movie', 'show', 'book'] },
+          where_seen: { type: 'string' },
+        },
+        required: ['name', 'media_type'],
+      },
+    },
+  },
+  required: ['titles'],
+} as const
+
+type VisualTitle = {
+  name?: string
+  media_type?: string
+  where_seen?: string
+}
+
+type ExtractJobResponse = {
+  jobId?: string
+  status?: 'queued' | 'active' | 'completed' | 'failed' | string
+  data?: { titles?: VisualTitle[] } | null
+  error?: { message?: string; details?: string } | string | null
+}
+
+function formatVisualTitles(titles: VisualTitle[] | undefined): string {
+  const lines = (titles ?? [])
+    .map((title) => {
+      const name = title.name?.trim()
+      if (!name) return null
+      const type = title.media_type?.trim()
+      const where = title.where_seen?.trim()
+      const suffix = [type, where].filter(Boolean).join(', ')
+      return suffix ? `- ${name} (${suffix})` : `- ${name}`
+    })
+    .filter((line): line is string => Boolean(line))
+
+  if (lines.length === 0) return ''
+  return `On screen:\n${lines.join('\n')}`
+}
+
+async function pollExtractJob(jobId: string): Promise<string> {
+  const maxAttempts = 30
+  const delayMs = 1000
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+
+    const key = getApiKey()
+    const response = await fetch(`${SUPADATA_BASE}/extract/${encodeURIComponent(jobId)}`, {
+      headers: { 'x-api-key': key, Accept: 'application/json' },
+      cache: 'no-store',
+    })
+
+    if (response.status === 202) continue
+    if (!response.ok) throw await parseError(response)
+
+    const data = (await response.json()) as ExtractJobResponse
+    if (data.status === 'queued' || data.status === 'active' || data.jobId) {
+      if (data.status !== 'completed' && data.status !== 'failed') continue
+    }
+    if (data.status === 'failed') {
+      const message =
+        typeof data.error === 'string'
+          ? data.error
+          : data.error?.message || 'Video analysis failed'
+      throw new SupadataError(message, 'internal-error', 502)
+    }
+    if (data.status === 'completed') {
+      return formatVisualTitles(data.data?.titles)
+    }
+  }
+
+  throw new SupadataError(
+    'Video analysis is still processing',
+    'internal-error',
+    504,
+  )
+}
+
+/**
+ * On-screen title pass. Supadata charges 5 credits per extraction minute
+ * (minimum 5). Polling the job does not cost credits.
+ */
+export async function fetchReelVisualAnalysis(reelUrl: string): Promise<string> {
+  const key = getApiKey()
+  const response = await fetch(`${SUPADATA_BASE}/extract`, {
+    method: 'POST',
+    headers: {
+      'x-api-key': key,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+    body: JSON.stringify({
+      url: reelUrl,
+      prompt: VISUAL_PROMPT,
+      schema: VISUAL_SCHEMA,
+    }),
+  })
+
+  if (!response.ok) {
+    throw await parseError(response)
+  }
+
+  const data = (await response.json()) as ExtractJobResponse
+  if (data.jobId) {
+    return pollExtractJob(data.jobId)
+  }
+
+  return formatVisualTitles(data.data?.titles)
+}
+
 export function isSupadataAccessError(error: unknown): boolean {
   if (!(error instanceof SupadataError)) return false
   return (

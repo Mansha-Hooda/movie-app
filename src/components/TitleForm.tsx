@@ -1,23 +1,14 @@
 'use client'
 
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Search } from 'lucide-react'
+import { MEDIA_TYPES } from '@/lib/titles/constants'
+import { moodsFromGenre } from '@/lib/genre-mood-map'
+import { loadCustomMoods, saveCustomMoods } from '@/lib/titles/moods'
+import { TitleMetaFields } from '@/components/TitleMetaFields'
 import { createClient } from '@/lib/supabase/client'
 import { createTitle, findDuplicateInList, findDuplicateTitle } from '@/lib/titles/api'
-import { MEDIA_TYPES, WATCH_LATER_OPTIONS } from '@/lib/titles/constants'
-import { moodsFromGenre } from '@/lib/genre-mood-map'
-import {
-  addCustomMood,
-  customMoodsFromTitles,
-  loadCustomMoods,
-  matchBuiltInMood,
-  mergeMoodOptions,
-  moodLabel,
-  saveCustomMoods,
-  uniqueMoods,
-} from '@/lib/titles/moods'
 import type { EnrichmentData, SearchResult } from '@/lib/enrichment/types'
 import type { MediaType, Title, WatchLater } from '@/types/database'
 
@@ -69,8 +60,6 @@ export function TitleForm({
   const [mediaType, setMediaType] = useState<MediaType>(initialMediaType)
   const [suggestedBy, setSuggestedBy] = useState('')
   const [moodTags, setMoodTags] = useState<string[]>([])
-  const [customMoods, setCustomMoods] = useState<string[]>([])
-  const [customMoodInput, setCustomMoodInput] = useState('')
   const [watchLater, setWatchLater] = useState<WatchLater>('soon')
   const [enrichment, setEnrichment] = useState<EnrichmentFields>(EMPTY_ENRICHMENT)
   const [results, setResults] = useState<SearchResult[]>([])
@@ -85,12 +74,6 @@ export function TitleForm({
   const blurTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const autoEnrichPending = useRef(autoEnrich && initialName.trim().length >= 2)
   const skipNextMediaTypeClear = useRef(true)
-
-  useEffect(() => {
-    setCustomMoods(
-      uniqueMoods([...loadCustomMoods(userId), ...customMoodsFromTitles(existingTitles)]),
-    )
-  }, [userId, existingTitles])
 
   useEffect(() => {
     setDuplicate(findDuplicateInList(existingTitles, name, mediaType))
@@ -162,36 +145,6 @@ export function TitleForm({
     setMoodTags([])
   }, [mediaType])
 
-  const moodOptions = mergeMoodOptions(customMoods)
-
-  function toggleMoodTag(tag: string) {
-    setMoodTags((current) =>
-      current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag],
-    )
-  }
-
-  function commitCustomMoodInput(currentTags: string[] = moodTags): string[] {
-    const builtIn = matchBuiltInMood(customMoodInput)
-    if (builtIn) {
-      setCustomMoodInput('')
-      return currentTags.includes(builtIn) ? currentTags : [...currentTags, builtIn]
-    }
-
-    const trimmed = customMoodInput.trim().replace(/\s+/g, ' ')
-    if (!trimmed) return currentTags
-
-    const nextCustom = addCustomMood(userId, trimmed)
-    const stored =
-      nextCustom.find((mood) => mood.toLowerCase() === trimmed.toLowerCase()) ?? trimmed
-    setCustomMoods(nextCustom)
-    setCustomMoodInput('')
-    return currentTags.includes(stored) ? currentTags : [...currentTags, stored]
-  }
-
-  function handleAddCustomMood() {
-    setMoodTags(commitCustomMoodInput())
-  }
-
   function clearEnrichmentOnManualEdit(nextName: string) {
     setName(nextName)
     setEnrichment(EMPTY_ENRICHMENT)
@@ -254,8 +207,7 @@ export function TitleForm({
     setError(null)
     setSubmitting(true)
 
-    const tags = commitCustomMoodInput()
-    setMoodTags(tags)
+    const tags = moodTags
 
     const supabase = createClient()
     const { data: existing, error: duplicateError } = await findDuplicateTitle(
@@ -307,13 +259,6 @@ export function TitleForm({
     enrichment.genre ||
     enrichment.runtime_or_pages ||
     enrichment.synopsis
-
-  const selectChip = (selected: boolean) =>
-    `rounded-xl px-4 py-2 text-sm transition duration-150 active:scale-95 ${
-      selected
-        ? 'bg-white text-ink'
-        : 'bg-surface text-white'
-    }`
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -435,82 +380,19 @@ export function TitleForm({
         </div>
       )}
 
-      <div>
-        <label htmlFor="suggested_by" className="mb-2 block text-sm text-muted">
-          Suggested by · optional
-        </label>
-        <input
-          id="suggested_by"
-          type="text"
-          placeholder="Who told you about it"
-          value={suggestedBy}
-          onChange={(event: ChangeEvent<HTMLInputElement>) =>
-            setSuggestedBy(event.target.value)
-          }
-          className="field rounded-xl py-3"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="custom_mood" className="mb-2 block text-sm text-muted">
-          Mood
-        </label>
-        <div className="relative">
-          <Search
-            className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted"
-            strokeWidth={1.75}
-          />
-          <input
-            id="custom_mood"
-            type="text"
-            placeholder="add a mood"
-            value={customMoodInput}
-            onChange={(event) => setCustomMoodInput(event.target.value)}
-            onBlur={handleAddCustomMood}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault()
-                handleAddCustomMood()
-              }
-            }}
-            className="field rounded-xl py-3 pl-10"
-          />
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {moodOptions.map((tag) => {
-            const selected = moodTags.includes(tag)
-            return (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => toggleMoodTag(tag)}
-                className={selectChip(selected)}
-              >
-                {moodLabel(tag)}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      <div>
-        <span className="mb-3 block text-sm text-muted">When will you watch it</span>
-        <div className="flex flex-wrap gap-2">
-          {WATCH_LATER_OPTIONS.map((option) => {
-            const selected = watchLater === option.value
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setWatchLater(option.value)}
-                className={selectChip(selected)}
-              >
-                {option.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+      <TitleMetaFields
+        userId={userId}
+        existingTitles={existingTitles}
+        suggestedBy={suggestedBy}
+        onSuggestedByChange={setSuggestedBy}
+        moodTags={moodTags}
+        onMoodTagsChange={setMoodTags}
+        watchLater={watchLater}
+        onWatchLaterChange={(value) => {
+          if (value) setWatchLater(value)
+        }}
+        idPrefix="add"
+      />
 
       {duplicate && (
         <div className="rounded-xl bg-surface px-3 py-2 text-sm" role="status">
