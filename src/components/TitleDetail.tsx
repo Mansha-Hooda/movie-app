@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { BottomSheet } from '@/components/BottomSheet'
+import { WhereToWatch } from '@/components/WhereToWatch'
 import { createClient } from '@/lib/supabase/client'
 import { updateTitleStatus } from '@/lib/titles/api'
 import { commitmentLabel, formatAddedDate, MEDIA_TYPES } from '@/lib/titles/constants'
@@ -135,6 +136,8 @@ export function TitleDetail({ title, onClose, onUpdate }: TitleDetailProps) {
           >
             {updating ? 'Saving…' : doneLabel}
           </button>
+
+          <WhereToWatch name={title.name} mediaType={title.media_type} />
 
           <div className="mt-5">
             <MetaRow label="Type" value={typeLabel} />
