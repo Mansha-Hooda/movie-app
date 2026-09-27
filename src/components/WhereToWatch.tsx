@@ -73,14 +73,15 @@ export function WhereToWatch({ name, mediaType }: WhereToWatchProps) {
   }, [name, mediaType])
 
   if (mediaType === 'book') return null
-  if (!loading && providers.length === 0) return null
 
   return (
     <section className="mt-6" aria-label="Where to watch">
       <p className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-muted">
         Where to watch
       </p>
-      {loading ? (
+      {!loading && providers.length === 0 ? (
+        <p className="text-sm text-muted">Not available in your region</p>
+      ) : loading ? (
         <div className="flex gap-2" aria-hidden>
           {Array.from({ length: 4 }, (_, index) => (
             <span key={index} className="h-12 w-12 animate-pulse rounded-xl bg-surface" />
