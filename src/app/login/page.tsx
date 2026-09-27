@@ -10,7 +10,7 @@ export default function LoginPage() {
           alt=""
           className="mx-auto mb-4 h-16 w-16 rounded-2xl"
         />
-        <h1 className="mb-2 text-center text-2xl font-medium text-fg">Backlog</h1>
+        <h1 className="mb-2 text-center text-2xl font-medium text-fg">backlog</h1>
         <p className="mb-8 text-center text-sm text-muted">
           Save recommendations. Pick the right one when you&apos;re ready.
         </p>

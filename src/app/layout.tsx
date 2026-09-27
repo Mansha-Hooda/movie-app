@@ -56,12 +56,12 @@ const APPLE_STARTUP_IMAGES = [
 ]
 
 export const metadata: Metadata = {
-  title: 'Backlog',
+  title: 'backlog',
   description: 'Capture and surface movie, show, and book recommendations.',
-  manifest: '/manifest.json?v=9',
+  manifest: '/manifest.json?v=10',
   appleWebApp: {
     capable: true,
-    title: 'BOOKMARK',
+    title: 'backlog',
     statusBarStyle: 'black-translucent',
     startupImage: APPLE_STARTUP_IMAGES,
   },

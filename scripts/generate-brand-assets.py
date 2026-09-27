@@ -168,7 +168,7 @@ def make_splash(glyph: Image.Image, width: int, height: int) -> Image.Image:
     mark = fit_glyph(glyph, mark_size)
     font_size = max(28, int(width * 0.055))
     font = load_font(font_size)
-    text = 'BOOKMARK'
+    text = 'backlog'
     text_bbox = draw.textbbox((0, 0), text, font=font)
     text_w, text_h = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
     gap = int(height * 0.035)

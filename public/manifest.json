@@ -1,6 +1,6 @@
 {
-  "name": "BOOKMARK",
-  "short_name": "BOOKMARK",
+  "name": "backlog",
+  "short_name": "backlog",
   "id": "/",
   "description": "Capture and surface movie, show, and book recommendations.",
   "start_url": "/",
